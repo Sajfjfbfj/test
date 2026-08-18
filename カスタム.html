@@ -2332,33 +2332,60 @@
       showToast('↩ リセットしました');
     };
 
-    window.openShare = function() {
+    function renderShareQr(url) {
+      const qrWrap = document.getElementById('shareQrWrap');
+      qrWrap.innerHTML = '';
+      if (typeof qrcode === 'function') {
+        try {
+          // typeNumber 0 = 自動判定。誤り訂正レベルは容量優先の 'L'
+          const qr = qrcode(0, 'L');
+          qr.addData(url);
+          qr.make();
+          qrWrap.innerHTML = qr.createSvgTag(4, 0);
+        } catch (qrErr) {
+          // データが長すぎてQRコード化できない場合はURLのみ表示
+          qrWrap.innerHTML = '<div style="font-size:11.5px; color:var(--text-sub); padding:20px; text-align:center;">内容が多いため、QRコードは生成できませんでした。<br>下のURLをコピーしてご利用ください。</div>';
+        }
+      }
+    }
+
+    window.openShare = async function() {
       collectEditorFields();
       saveUserData();
+
+      const shareInput = document.getElementById('shareUrlInput');
+      const qrWrap = document.getElementById('shareQrWrap');
+
       try {
         const json = JSON.stringify(userData);
         const compressed = LZString.compressToEncodedURIComponent(json);
-        const url = `${location.origin}${location.pathname.replace('カスタム.html', 'プレビュー.html')}#custom=${compressed}`;
+        const previewBase = `${location.origin}${location.pathname.replace('カスタム.html', 'プレビュー.html')}`;
+        const longUrl = `${previewBase}#custom=${compressed}`;
 
-        document.getElementById('shareUrlInput').value = url;
+        // 先に長いURLで即表示 → 短縮リンクAPIが使えれば差し替える
+        shareInput.value = longUrl;
+        qrWrap.innerHTML = '<div style="font-size:11.5px; color:var(--text-sub); padding:20px; text-align:center;">リンクを準備しています…</div>';
+        document.getElementById('shareModal').classList.add('show');
 
-        const qrWrap = document.getElementById('shareQrWrap');
-        qrWrap.innerHTML = '';
-        if (typeof qrcode === 'function') {
-          try {
-            // typeNumber 0 = 自動判定。誤り訂正レベルは容量優先の 'L' に変更
-            // （'M' より約25%多くのデータを埋め込めるため、長いノートでもQR化できる可能性が上がる）
-            const qr = qrcode(0, 'L');
-            qr.addData(url);
-            qr.make();
-            qrWrap.innerHTML = qr.createSvgTag(4, 0);
-          } catch (qrErr) {
-            // データが長すぎてQRコード化できない場合はURLのみ表示
-            qrWrap.innerHTML = '<div style="font-size:11.5px; color:var(--text-sub); padding:20px; text-align:center;">内容が多いため、QRコードは生成できませんでした。<br>下のURLをコピーしてご利用ください。</div>';
+        let finalUrl = longUrl;
+        try {
+          const res = await fetch('/api/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: compressed })
+          });
+          if (res.ok) {
+            const j = await res.json();
+            if (j && j.id) {
+              finalUrl = `${previewBase}?s=${j.id}`;
+            }
           }
+        } catch (apiErr) {
+          // 短縮リンクAPIが未設定・オフラインなどの場合は長いURLのままフォールバック
         }
 
-        document.getElementById('shareModal').classList.add('show');
+        shareInput.value = finalUrl;
+        renderShareQr(finalUrl);
       } catch (e) {
         alert('共有URLの生成に失敗しました。');
       }

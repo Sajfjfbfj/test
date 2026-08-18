@@ -1307,22 +1307,37 @@
     };
 
     // 共有URL文字列（テキスト入力・QR読み取り・ページ読み込み時の全てで共通利用）
-    // 3Dカスタムエディタが発行するリンクは「#custom=」形式（ハッシュ）で、
-    // 中身は配列そのもの（{data:[...]}ではない）なので、両方の形式に対応する。
-    function importFromUrlString(urlString) {
+    // 3Dカスタムエディタが発行するリンクは3種類ある:
+    //   1) "?s=ID"       … 短縮リンク（サーバーのKVから本体データを取得）
+    //   2) "#custom=..." … ハッシュに圧縮データを直接埋め込む形式
+    //   3) "?d=..."      … 従来のクエリ形式
+    // 中身は配列そのもの（{data:[...]}ではない）のケースにも対応する。
+    async function importFromUrlString(urlString) {
       if (!urlString) return false;
       try {
         urlString = urlString.trim();
         let compressed = null;
 
-        const customIdx = urlString.indexOf('#custom=');
-        if (customIdx !== -1) {
-          // "#custom=" 形式（3Dカスタムエディタの共有リンク／QRコード）
-          compressed = urlString.slice(customIdx + '#custom='.length);
+        let shortId = null;
+        try {
+          const parsedUrl = new URL(urlString);
+          shortId = parsedUrl.searchParams.get('s');
+        } catch (e) { /* 絶対URLでない場合は無視して他の形式を試す */ }
+
+        if (shortId) {
+          const res = await fetch(`/api/share?id=${encodeURIComponent(shortId)}`);
+          if (!res.ok) return false;
+          const j = await res.json();
+          if (!j || !j.data) return false;
+          compressed = j.data;
         } else {
-          // "?d=" 形式（従来の共有リンク）
-          const url = new URL(urlString);
-          compressed = url.searchParams.get('d');
+          const customIdx = urlString.indexOf('#custom=');
+          if (customIdx !== -1) {
+            compressed = urlString.slice(customIdx + '#custom='.length);
+          } else {
+            const url = new URL(urlString);
+            compressed = url.searchParams.get('d');
+          }
         }
 
         if (!compressed) return false;
@@ -1343,10 +1358,11 @@
       }
     }
 
-    window.loadFromUrl = function() {
+    window.loadFromUrl = async function() {
       const urlString = document.getElementById('urlInput').value.trim();
       if (!urlString) return;
-      if (importFromUrlString(urlString)) {
+      showToast('⏳ 読み込み中…');
+      if (await importFromUrlString(urlString)) {
         closeUrlModal();
       } else {
         showToast('❌ URLの読み込みに失敗しました');
@@ -1423,10 +1439,11 @@
       qrAnimId = requestAnimationFrame(scanQrFrame);
     }
 
-    function handleQrResult(text) {
+    async function handleQrResult(text) {
       stopQrScan();
       window.closeQrModal();
-      if (importFromUrlString(text)) {
+      showToast('⏳ 読み込み中…');
+      if (await importFromUrlString(text)) {
         showToast('📷 QRコードを読み込みました');
       } else {
         showToast('❌ QRコードの内容を読み込めませんでした');
@@ -1444,12 +1461,15 @@
     };
 
     function checkUrlParams() {
-      // 共有リンクの自動読み込み："#custom=..."（新形式）と "?d=..."（旧形式）の両方に対応
-      if (window.location.hash.indexOf('#custom=') === 0 || new URLSearchParams(window.location.search).get('d')) {
+      // 共有リンクの自動読み込み: "?s=ID"（短縮）/ "#custom=..."（新形式）/ "?d=..."（旧形式）
+      const params = new URLSearchParams(window.location.search);
+      const hasShort = params.get('s');
+      const hasCustomHash = window.location.hash.indexOf('#custom=') === 0;
+      const hasD = params.get('d');
+      if (hasShort || hasCustomHash || hasD) {
         importFromUrlString(window.location.href);
       }
 
-      const params = new URLSearchParams(window.location.search);
       const localId = params.get('localId');
       if (localId) {
         try {
