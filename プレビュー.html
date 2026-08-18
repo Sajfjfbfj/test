@@ -1306,25 +1306,41 @@
       reader.readAsText(file);
     };
 
-    // 共有URL文字列（テキスト入力・QR読み取りの両方から共通で使う）を読み込む
+    // 共有URL文字列（テキスト入力・QR読み取り・ページ読み込み時の全てで共通利用）
+    // 3Dカスタムエディタが発行するリンクは「#custom=」形式（ハッシュ）で、
+    // 中身は配列そのもの（{data:[...]}ではない）なので、両方の形式に対応する。
     function importFromUrlString(urlString) {
       if (!urlString) return false;
       try {
-        const url = new URL(urlString);
-        const dParam = url.searchParams.get('d');
-        if (dParam) {
-          const json = LZString.decompressFromEncodedURIComponent(dParam);
-          const parsed = JSON.parse(json);
-          if (parsed.data) {
-            userData = parsed.data.map(d => ({ ...defaultStage(), ...d }));
-            onDataLoaded('共有リンク');
-            return true;
-          }
+        urlString = urlString.trim();
+        let compressed = null;
+
+        const customIdx = urlString.indexOf('#custom=');
+        if (customIdx !== -1) {
+          // "#custom=" 形式（3Dカスタムエディタの共有リンク／QRコード）
+          compressed = urlString.slice(customIdx + '#custom='.length);
+        } else {
+          // "?d=" 形式（従来の共有リンク）
+          const url = new URL(urlString);
+          compressed = url.searchParams.get('d');
         }
+
+        if (!compressed) return false;
+
+        const json = LZString.decompressFromEncodedURIComponent(compressed);
+        if (!json) return false;
+
+        const parsed = JSON.parse(json);
+        const dataArr = Array.isArray(parsed) ? parsed
+          : (parsed && Array.isArray(parsed.data) ? parsed.data : null);
+        if (!dataArr) return false;
+
+        userData = dataArr.map(d => ({ ...defaultStage(), ...d }));
+        onDataLoaded('共有リンク');
+        return true;
       } catch (err) {
-        /* fall through to false */
+        return false;
       }
-      return false;
     }
 
     window.loadFromUrl = function() {
@@ -1428,18 +1444,12 @@
     };
 
     function checkUrlParams() {
-      const params = new URLSearchParams(window.location.search);
-      const raw = params.get('d');
-      if (raw) {
-        try {
-          const json = LZString.decompressFromEncodedURIComponent(raw);
-          const parsed = JSON.parse(json);
-          if (parsed.data) {
-            userData = parsed.data.map(d => ({ ...defaultStage(), ...d }));
-            onDataLoaded('共有リンク');
-          }
-        } catch(e) {}
+      // 共有リンクの自動読み込み："#custom=..."（新形式）と "?d=..."（旧形式）の両方に対応
+      if (window.location.hash.indexOf('#custom=') === 0 || new URLSearchParams(window.location.search).get('d')) {
+        importFromUrlString(window.location.href);
       }
+
+      const params = new URLSearchParams(window.location.search);
       const localId = params.get('localId');
       if (localId) {
         try {

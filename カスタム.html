@@ -2346,8 +2346,9 @@
         qrWrap.innerHTML = '';
         if (typeof qrcode === 'function') {
           try {
-            // typeNumber 0 = 自動判定。データが長い場合は自動で大きいバージョンが選ばれる
-            const qr = qrcode(0, 'M');
+            // typeNumber 0 = 自動判定。誤り訂正レベルは容量優先の 'L' に変更
+            // （'M' より約25%多くのデータを埋め込めるため、長いノートでもQR化できる可能性が上がる）
+            const qr = qrcode(0, 'L');
             qr.addData(url);
             qr.make();
             qrWrap.innerHTML = qr.createSvgTag(4, 0);
