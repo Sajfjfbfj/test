@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>リアル八節くん ─ マイリスト</title>
+  <meta name="description" content="保存した弓道カスタムノートやお気に入りを一覧管理できるマイリストページ。" />
+  <meta name="keywords" content="弓道, 射法八節, 3D, マイリスト, UNIQLO UI" />
+
+  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+  <script src="sync.js"></script>
+  <script src="tutorial.js"></script>
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" href="apple-icon.png">
+  <meta name="msapplication-TileImage" content="ms-icon-144x144.png">  <meta name="theme-color" content="#ffffff">
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+
+  <style>
+    /* ================================================================
+       UNIQLO STYLE DESIGN SYSTEM & TOKENS (マイリスト版)
+       ================================================================ */
+    :root {
+      --uq-red: #E60012;
+      --uq-red-hover: #CC0010;
+      --uq-red-light: #FFF0F0;
+      --uq-black: #111111;
+      --uq-dark-gray: #333333;
+      --uq-gray: #666666;
+      --uq-light-gray: #999999;
+      --uq-border: #E5E5E5;
+      --uq-border-light: #F0F0F0;
+      --uq-bg: #FFFFFF;
+      --uq-surface: #F8F8F8;
+      --uq-surface-subtle: #FAFAFA;
+      
+      --primary: var(--uq-red);
+      --text: var(--uq-black);
+      --text-sub: var(--uq-gray);
+      --text-muted: var(--uq-light-gray);
+      --line: var(--uq-border);
+      --line-subtle: var(--uq-border-light);
+      --bg: var(--uq-bg);
+      --panel: var(--uq-surface);
+
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+      --radius-pill: 9999px;
+
+      --font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-scale: 1;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    [data-theme="dark"] {
+      --uq-black: #F5F5F5;
+      --uq-dark-gray: #E0E0E0;
+      --uq-gray: #A0A0A0;
+      --uq-light-gray: #666666;
+      --uq-border: #2A2A2A;
+      --uq-border-light: #222222;
+      --uq-bg: #121212;
+      --uq-surface: #1C1C1C;
+      --uq-surface-subtle: #181818;
+      --uq-red-light: rgba(230, 0, 18, 0.15);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.8);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-family);
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+      transition: all 0.15s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      user-select: none;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* HEADER */
+    .uq-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 52px;
+      flex-shrink: 0;
+    }
+
+    .uq-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .uq-logo-box {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .uq-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .uq-app-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .uq-app-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-tag-badge {
+      background: var(--uq-black);
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: var(--radius-sm);
+    }
+
+    [data-theme="dark"] .uq-tag-badge {
+      background: var(--uq-red);
+    }
+
+    .uq-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .uq-icon-btn {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+    }
+
+    .uq-icon-btn:hover {
+      background: var(--panel);
+    }
+
+    /* MAIN CONTAINER */
+    .uq-main-container {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .uq-section-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+
+    .uq-card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .uq-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .uq-card-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'Inter', monospace;
+    }
+
+    .uq-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .uq-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .uq-btn:hover {
+      background: var(--panel);
+      border-color: var(--uq-gray);
+    }
+
+    .uq-btn.primary {
+      background: var(--uq-red) !important;
+      color: #FFFFFF !important;
+      border-color: var(--uq-red) !important;
+    }
+
+    .uq-btn.primary:hover {
+      background: var(--uq-red-hover) !important;
+    }
+
+    .uq-btn.danger {
+      color: var(--uq-red);
+      background: var(--uq-red-light);
+      border-color: rgba(230,0,18,0.2);
+    }
+
+    .uq-empty-box {
+      border: 2px dashed var(--line);
+      border-radius: var(--radius-md);
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: var(--panel);
+    }
+
+    /* DRAWER */
+    .uq-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .uq-drawer-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .uq-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100%;
+      background: var(--bg);
+      z-index: 2001;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .uq-drawer.open {
+      right: 0;
+    }
+
+    .uq-drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .uq-drawer-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .uq-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .uq-drawer-section-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 20px 6px;
+    }
+
+    .uq-drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+
+    .uq-drawer-link:hover {
+      background: var(--panel);
+    }
+
+    .uq-drawer-link.active {
+      color: var(--uq-red);
+      background: var(--uq-red-light);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="uq-header">
+    <div class="uq-brand">
+      <div class="uq-logo-box"><img src="favicon-96x96.png" alt="リアル八節くん" width="30" height="30"></div>
+      <div class="uq-app-title-wrap">
+        <span class="uq-app-title">
+          リアル八節くん
+          <span class="uq-tag-badge">マイリスト</span>
+        </span>
+      </div>
+    </div>
+    <div class="uq-header-actions">
+      <button class="uq-icon-btn" id="themeToggleBtn" aria-label="テーマ切替" title="ダーク/ライト切替">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+      <button class="uq-icon-btn" id="menuToggleBtn" onclick="toggleDrawer()" aria-label="メニュー">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="uq-main-container">
+    <!-- SECTION 1: 編集中ノート -->
+    <section>
+      <h2 class="uq-section-title">
+        <span class="material-symbols-outlined" style="font-size:16px;">edit_document</span>
+        現在編集中のノート
+      </h2>
+      <div id="editing-root"></div>
+    </section>
+
+    <!-- SECTION 2: お気に入り保存済み -->
+    <section>
+      <h2 class="uq-section-title">
+        <span class="material-symbols-outlined" style="font-size:16px;">star</span>
+        お気に入り保存済みノート
+      </h2>
+      <div id="favorites-root"></div>
+    </section>
+  </main>
+
+
+  <!-- DRAWER (8 items) -->
+  <div class="uq-drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+  <aside class="uq-drawer" id="sideDrawer">
+    <div class="uq-drawer-header">
+      <span class="uq-drawer-title">メニュー</span>
+      <button class="uq-icon-btn" onclick="toggleDrawer()" aria-label="閉じる">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="uq-drawer-body">
+      <div class="uq-drawer-section-label">PAGE SELECT</div>
+      <a href="index.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">accessibility_new</span>
+        <span>一般用（標準モード）</span>
+      </a>
+      <a href="中高生.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">school</span>
+        <span>中高生用（やさしい解説）</span>
+      </a>
+      <a href="カスタム.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span>3Dカスタマイズ</span>
+      </a>
+      <a href="プレビュー.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">visibility</span>
+        <span>閲覧専用ビュー</span>
+      </a>
+      <a href="マイリスト.html" class="uq-drawer-link active">
+        <span class="material-symbols-outlined">bookmarks</span>
+        <span>マイリスト・保存済み</span>
+      </a>
+      <a href="稽古ログ.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">edit_calendar</span>
+        <span>稽古ログ（記録と振り返り）</span>
+      </a>
+      <a href="動画比較.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">compare</span>
+        <span>動画比較（フォームチェック）</span>
+      </a>
+      <a href="設定.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">settings</span>
+        <span>設定（テーマ・文字サイズ）</span>
+      </a>
+    </div>
+  </aside>
+
+  <script>
+    const NOTEBOOKS_KEY = 'kyudo_notebooks_v1';
+    const LEGACY_KEY = 'kyudo_custom_notes_v2';
+
+    function loadNotebooks() {
+      try {
+        const raw = localStorage.getItem(NOTEBOOKS_KEY);
+        if (raw) {
+          const nbs = JSON.parse(raw);
+          if (Array.isArray(nbs) && nbs.length > 0) return nbs;
+        }
+      } catch(e) {}
+
+      try {
+        const legacy = localStorage.getItem(LEGACY_KEY);
+        if (legacy) {
+          const data = JSON.parse(legacy);
+          return [{
+            id: Date.now(),
+            name: 'ノート1',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            data: data
+          }];
+        }
+      } catch(e) {}
+
+      return [];
+    }
+
+    function formatDate(ts) {
+      if (!ts) return '─';
+      const d = new Date(ts);
+      return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function render() {
+      const editRoot = document.getElementById('editing-root');
+      const allNotebooks = loadNotebooks();
+
+      if (allNotebooks.length > 0) {
+        editRoot.innerHTML = allNotebooks.map(nb => `
+          <div class="uq-card">
+            <div class="uq-card-info">
+              <div class="uq-card-title">📓 ${nb.name}</div>
+              <div class="uq-card-meta">最終更新：${formatDate(nb.updatedAt)}</div>
+            </div>
+            <div class="uq-card-actions">
+              <button class="uq-btn primary" onclick="editNotebook(${nb.id})">編集する</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        editRoot.innerHTML = `<div class="uq-empty-box">現在作成されたノートはありません。「3D編集」から新しいノートを作成できます。</div>`;
+      }
+
+      const favRoot = document.getElementById('favorites-root');
+      const favorites = JSON.parse(localStorage.getItem('kyudo_favorites') || '[]');
+
+      if (favorites.length > 0) {
+        favRoot.innerHTML = favorites.map((fav, idx) => `
+          <div class="uq-card">
+            <div class="uq-card-info">
+              <div class="uq-card-title">⭐ ${fav.name}</div>
+              <div class="uq-card-meta">保存日：${formatDate(fav.id)}</div>
+            </div>
+            <div class="uq-card-actions">
+              <button class="uq-btn primary" onclick="viewFavorite(${fav.id})">閲覧する</button>
+              <button class="uq-btn danger" onclick="deleteFavorite(${idx})">削除</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        favRoot.innerHTML = `<div class="uq-empty-box">お気に入りはまだ保存されていません。「閲覧用」ページから⭐ボタンで保存できます。</div>`;
+      }
+    }
+
+    window.editNotebook = function(id) {
+      localStorage.setItem('kyudo_active_notebook', String(id));
+      location.href = 'カスタム.html';
+    };
+
+    window.viewFavorite = function(id) {
+      location.href = `プレビュー.html?localId=${id}`;
+    };
+
+    window.deleteFavorite = function(idx) {
+      if (!confirm('このお気に入りを削除しますか？')) return;
+      const favorites = JSON.parse(localStorage.getItem('kyudo_favorites') || '[]');
+      favorites.splice(idx, 1);
+      localStorage.setItem('kyudo_favorites', JSON.stringify(favorites));
+      render();
+    };
+
+    render();
+
+    function toggleDrawer() {
+      const drawer = document.getElementById('sideDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+      }
+    }
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function updateTheme(isDark) {
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+        localStorage.setItem('kyudo_dark_mode', '1');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeIcon.textContent = 'dark_mode';
+        localStorage.setItem('kyudo_dark_mode', '0');
+      }
+    }
+
+    if (localStorage.getItem('kyudo_dark_mode') === '1') {
+      updateTheme(true);
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      updateTheme(!isDark);
+    });
+  </script>
+</body>
+</html>

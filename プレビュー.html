@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>リアル八節くん ─ 閲覧用プレビュー</title>
+  <meta name="description" content="作成・共有された弓道・射法八節のカスタムノートと3Dモデルを閲覧・確認できるビューア。" />
+  <meta name="keywords" content="弓道, 射法八節, 3D, プレビュー, 閲覧, UNIQLO UI" />
+
+  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+  <!-- 3Dモデル事前読み込み -->
+  <link rel="preload" href="弓道基礎１.glb" as="fetch" crossorigin="anonymous">
+
+  <!-- LZ-String -->
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <!-- jsQR (QRコード読み取り用) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="sync.js"></script>
+  <script src="tutorial.js"></script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" href="apple-icon.png">
+  <meta name="msapplication-TileImage" content="ms-icon-144x144.png">
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <meta name="theme-color" content="#ffffff">
+
+  <style>
+    /* ================================================================
+       UNIQLO STYLE DESIGN SYSTEM & TOKENS (プレビュー版)
+       ================================================================ */
+    :root {
+      --uq-red: #E60012;
+      --uq-red-hover: #CC0010;
+      --uq-red-light: #FFF0F0;
+      --uq-black: #111111;
+      --uq-dark-gray: #333333;
+      --uq-gray: #666666;
+      --uq-light-gray: #999999;
+      --uq-border: #E5E5E5;
+      --uq-border-light: #F0F0F0;
+      --uq-bg: #FFFFFF;
+      --uq-surface: #F8F8F8;
+      --uq-surface-subtle: #FAFAFA;
+      
+      --color-secondary-bright: #F59E0B;
+
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+      --radius-pill: 9999px;
+
+      --font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-scale: 1;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    [data-theme="dark"] {
+      --uq-black: #F5F5F5;
+      --uq-dark-gray: #E0E0E0;
+      --uq-gray: #A0A0A0;
+      --uq-light-gray: #666666;
+      --uq-border: #2A2A2A;
+      --uq-border-light: #222222;
+      --uq-bg: #121212;
+      --uq-surface: #1C1C1C;
+      --uq-surface-subtle: #181818;
+      --uq-red-light: rgba(230, 0, 18, 0.15);
+      --color-secondary-bright: #FBBF24;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.8);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      background-color: var(--uq-bg);
+      color: var(--uq-black);
+      font-family: var(--font-family);
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button {
+      font-family: inherit;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+      transition: all 0.15s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      user-select: none;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* HEADER */
+    .uq-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--uq-bg);
+      border-bottom: 1px solid var(--uq-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 52px;
+      flex-shrink: 0;
+    }
+
+    .uq-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+
+    .uq-logo-box {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .uq-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .uq-app-title-wrap {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .uq-app-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--uq-black);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .uq-tag-badge {
+      background: var(--uq-black);
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+    }
+
+    [data-theme="dark"] .uq-tag-badge {
+      background: var(--uq-red);
+    }
+
+    .uq-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    /* Prevent the header from getting crushed on narrow / portrait phones:
+       drop the text labels on header action buttons and keep icons only,
+       so the app title always fits on a single line. */
+    @media (max-width: 600px) {
+      .uq-header {
+        padding: 0 10px;
+        gap: 6px;
+      }
+      .uq-header-actions {
+        gap: 2px;
+      }
+      .uq-header-actions .uq-ctrl-btn-label {
+        display: none;
+      }
+      .uq-header-actions .uq-btn {
+        padding: 7px 8px;
+      }
+      .uq-app-title {
+        font-size: 13.5px;
+      }
+    }
+
+    .uq-icon-btn {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      color: var(--uq-black);
+    }
+
+    .uq-icon-btn:hover {
+      background: var(--uq-surface);
+    }
+
+    /* MAIN LAYOUT (50:50) */
+    .uq-main-layout {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @media (min-width: 1024px) {
+      .uq-main-layout {
+        flex-direction: row;
+      }
+    }
+
+    /* 3D VIEWER COLUMN */
+    .uq-viewer-column {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--uq-border);
+      position: relative;
+      background: var(--uq-surface-subtle);
+    }
+
+    @media (min-width: 1024px) {
+      .uq-viewer-column {
+        flex: 1;
+        border-bottom: none;
+        border-right: 1px solid var(--uq-border);
+      }
+    }
+
+    #viewer {
+      position: relative;
+      flex: 1 1 0;
+      min-height: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #viewer canvas {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      touch-action: none;
+    }
+
+    /* 3D HUD OVERLAY */
+    .uq-hud-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .uq-hud-chip {
+      pointer-events: auto;
+      background: var(--uq-bg);
+      border: 1px solid var(--uq-border);
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--uq-black);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .uq-viewer-controls {
+      padding: 8px 12px;
+      background: var(--uq-bg);
+      border-top: 1px solid var(--uq-border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .uq-ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--uq-border);
+      background: var(--uq-bg);
+      color: var(--uq-black);
+    }
+
+    .uq-btn:hover {
+      background: var(--uq-surface);
+      border-color: var(--uq-gray);
+    }
+
+    .uq-btn.primary {
+      background: var(--uq-red);
+      color: #FFFFFF;
+      border-color: var(--uq-red);
+    }
+
+    .uq-btn.primary:hover {
+      background: var(--uq-red-hover);
+    }
+
+    .uq-btn.active-red {
+      background: var(--uq-red) !important;
+      color: #FFFFFF !important;
+      border-color: var(--uq-red) !important;
+    }
+
+    .uq-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--uq-border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .uq-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      background: var(--uq-red);
+      cursor: pointer;
+    }
+
+    /* CONTENT COLUMN */
+    .uq-content-column {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--uq-bg);
+      overflow: hidden;
+    }
+
+    @media (min-width: 1024px) {
+      .uq-content-column {
+        flex: 1;
+      }
+    }
+
+    /* STAGE TABS BAR */
+    .uq-stage-tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--uq-border);
+      background: var(--uq-bg);
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+
+    .uq-stage-tabs-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .uq-stage-tab {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--uq-border);
+      background: var(--uq-bg);
+      cursor: pointer;
+      min-width: 58px;
+    }
+
+    .uq-stage-tab-num {
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--uq-light-gray);
+      letter-spacing: 0.05em;
+    }
+
+    .uq-stage-tab-name {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--uq-black);
+    }
+
+    .uq-stage-tab.active {
+      background: var(--uq-black);
+      border-color: var(--uq-black);
+    }
+
+    .uq-stage-tab.active .uq-stage-tab-num,
+    .uq-stage-tab.active .uq-stage-tab-name {
+      color: #FFFFFF;
+    }
+
+    [data-theme="dark"] .uq-stage-tab.active {
+      background: var(--uq-red);
+      border-color: var(--uq-red);
+    }
+
+    .uq-stage-tab.empty {
+      opacity: 0.45;
+    }
+
+    /* SCROLLABLE VIEW AREA */
+    .uq-view-scroll {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 16px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .uq-card-group {
+      background: var(--uq-bg);
+      border: 1px solid var(--uq-border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .uq-card-title {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--uq-red);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--uq-border);
+      background: var(--uq-surface);
+      color: var(--uq-black);
+    }
+
+    .uq-chip.primary {
+      background: var(--uq-red-light);
+      border-color: rgba(230,0,18,0.25);
+      color: var(--uq-red);
+    }
+
+    .uq-chip.secondary {
+      background: rgba(245,158,11,0.12);
+      border-color: rgba(245,158,11,0.3);
+      color: var(--color-secondary-bright);
+    }
+
+    .uq-callout-box {
+      background: var(--uq-surface);
+      border-left: 3px solid var(--uq-black);
+      padding: 10px 14px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 12.5px;
+      color: var(--uq-dark-gray);
+      line-height: 1.6;
+    }
+
+    .uq-callout-box.tip {
+      border-left-color: var(--uq-red);
+      background: var(--uq-red-light);
+      color: var(--uq-red);
+    }
+
+    .uq-warning-banner {
+      background: var(--uq-red-light);
+      border: 1px solid rgba(230, 0, 18, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--uq-red);
+      line-height: 1.5;
+    }
+
+    /* MODAL */
+    .uq-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .uq-modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .uq-modal-card {
+      background: var(--uq-bg);
+      width: 100%;
+      max-width: 480px;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* QR SCAN */
+    .uq-qr-scan-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 58vh;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .uq-qr-scan-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .uq-qr-scan-box {
+      position: absolute;
+      inset: 14%;
+      border: 2px solid var(--uq-red);
+      border-radius: var(--radius-md);
+      box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
+
+    #qrStatus {
+      font-size: 12px;
+      color: var(--uq-gray);
+      margin: 10px 0 14px;
+      text-align: center;
+      min-height: 16px;
+    }
+
+    /* DRAWER */
+    .uq-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .uq-drawer-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .uq-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100%;
+      background: var(--uq-bg);
+      z-index: 2001;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .uq-drawer.open {
+      right: 0;
+    }
+
+    .uq-drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--uq-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .uq-drawer-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--uq-black);
+    }
+
+    .uq-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .uq-drawer-section-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--uq-light-gray);
+      padding: 12px 20px 6px;
+    }
+
+    .uq-drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--uq-black);
+      transition: background 0.15s;
+    }
+
+    .uq-drawer-link:hover {
+      background: var(--uq-surface);
+    }
+
+    .uq-drawer-link.active {
+      color: var(--uq-red);
+      background: var(--uq-red-light);
+    }
+
+    #loading-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--uq-bg);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 74px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      opacity: 0;
+      background: var(--uq-black);
+      color: #FFFFFF;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 700;
+      z-index: 4000;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.25s, opacity 0.25s;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Landscape layout optimizations */
+    @media screen and (orientation: landscape) and (max-height: 600px) {
+      .uq-main-layout {
+        flex-direction: row !important;
+      }
+      .uq-viewer-column {
+        flex: 1 1 50% !important;
+        border-bottom: none !important;
+        border-right: 1px solid var(--uq-border) !important;
+      }
+      .uq-content-column {
+        flex: 1 1 50% !important;
+      }
+      .uq-ctrl-btn-label {
+        display: none;
+      }
+      .uq-btn {
+        padding: 6px 8px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="uq-header">
+    <div class="uq-brand">
+      <div class="uq-logo-box"><img src="favicon-96x96.png" alt="リアル八節くん" width="30" height="30"></div>
+      <div class="uq-app-title-wrap">
+        <span class="uq-app-title">
+          リアル八節くん
+          <span class="uq-tag-badge">閲覧用</span>
+        </span>
+      </div>
+    </div>
+    <div class="uq-header-actions">
+      <button class="uq-btn" onclick="document.getElementById('fileInput').click()" title="JSONファイルをインポート">
+        <span class="material-symbols-outlined" style="font-size:16px;">upload_file</span>
+        <span class="uq-ctrl-btn-label">ファイル</span>
+      </button>
+      <input type="file" id="fileInput" accept=".json,application/json" style="display:none;" onchange="loadFromFile(this)">
+      
+      <button class="uq-btn" onclick="openUrlModal()" title="共有URLを開く">
+        <span class="material-symbols-outlined" style="font-size:16px;">link</span>
+        <span class="uq-ctrl-btn-label">URL</span>
+      </button>
+
+      <button class="uq-btn" onclick="openQrModal()" title="QRコードを読み取る">
+        <span class="material-symbols-outlined" style="font-size:16px;">qr_code_scanner</span>
+        <span class="uq-ctrl-btn-label">QR</span>
+      </button>
+
+      <button class="uq-btn" onclick="saveToFavorites()" title="お気に入りに保存">
+        <span class="material-symbols-outlined" style="font-size:16px; color:#F59E0B;">star</span>
+        <span class="uq-ctrl-btn-label">保存</span>
+      </button>
+
+      <button class="uq-icon-btn" id="themeToggleBtn" aria-label="テーマ切替" title="ダーク/ライト切替">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+      <button class="uq-icon-btn" id="menuToggleBtn" onclick="toggleDrawer()" aria-label="メニュー">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main class="uq-main-layout">
+    <!-- LEFT: 3D VIEWER COLUMN -->
+    <section class="uq-viewer-column">
+      <div class="uq-hud-overlay">
+        <span class="uq-hud-chip" id="currentStageChip">01 足踏み</span>
+        <span class="uq-hud-chip" id="timeLabel">0.00s</span>
+      </div>
+
+      <div id="viewer">
+        <div id="loading-screen">
+          <div style="font-size: 13px; font-weight: 800; color: var(--uq-red); margin-bottom: 12px;">3Dモデル読み込み中...</div>
+          <div style="width: 180px; height: 3px; background: var(--uq-border); border-radius: 2px; overflow: hidden;">
+            <div id="loader-bar" style="width: 0%; height: 100%; background: var(--uq-red); transition: width 0.2s;"></div>
+          </div>
+          <div id="loader-text" style="font-size: 10px; color: var(--uq-light-gray); margin-top: 6px;">0%</div>
+        </div>
+      </div>
+
+      <div class="uq-viewer-controls">
+        <div class="uq-ctrl-row">
+          <button class="uq-btn active-red" id="playBtn">
+            <span class="material-symbols-outlined" style="font-size:16px;">play_arrow</span>
+            <span class="uq-ctrl-btn-label">再生</span>
+          </button>
+          <button class="uq-btn" id="pauseBtn">
+            <span class="material-symbols-outlined" style="font-size:16px;">pause</span>
+            <span class="uq-ctrl-btn-label">停止</span>
+          </button>
+          <button class="uq-btn" id="resetBtn">
+            <span class="material-symbols-outlined" style="font-size:16px;">replay</span>
+            <span class="uq-ctrl-btn-label">先頭</span>
+          </button>
+          <button class="uq-btn" id="fitBtn">
+            <span class="material-symbols-outlined" style="font-size:16px;">center_focus_strong</span>
+            <span class="uq-ctrl-btn-label">中央</span>
+          </button>
+        </div>
+        <div class="uq-ctrl-row">
+          <input id="timeline" class="uq-slider" type="range" min="0" max="3.333" step="0.0416" value="0.0416">
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: CONTENT COLUMN -->
+    <article class="uq-content-column">
+      <!-- Stage Tabs Bar -->
+      <nav class="uq-stage-tabs-bar" id="stageTabs"></nav>
+
+      <!-- Scrollable Note View Area -->
+      <div class="uq-view-scroll" id="viewScroll">
+        <!-- Welcome empty state -->
+        <div id="welcomeBox" class="uq-card-group" style="text-align:center; padding:32px 16px;">
+          <div style="font-size:36px; margin-bottom:8px;">🏹</div>
+          <div style="font-size:16px; font-weight:800; margin-bottom:4px;">弓道ノート ビューア</div>
+          <div style="font-size:12px; color:var(--uq-gray); line-height:1.6; margin-bottom:16px;">
+            右上の「ファイル」または「URL」からノートを読み込むと、カスタム解説と3Dモデルを連動して確認できます。
+          </div>
+          <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+            <button class="uq-btn primary" onclick="document.getElementById('fileInput').click()">📥 ファイルを開く</button>
+            <button class="uq-btn" onclick="openUrlModal()">🔗 URLから開く</button>
+            <button class="uq-btn" onclick="openQrModal()">📷 QRで開く</button>
+          </div>
+        </div>
+
+        <!-- Rendered Note sections -->
+        <div id="noteArea" style="display:none; flex-direction:column; gap:14px;">
+          <div class="uq-card-group" id="viewDesc"></div>
+          <div class="uq-card-group" id="viewMuscles"></div>
+          <div class="uq-card-group" id="viewTenouchi"></div>
+          <div class="uq-card-group" id="viewMiss"></div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- URL IMPORT MODAL -->
+  <div class="uq-modal-overlay" id="urlModal">
+    <div class="uq-modal-card">
+      <h3 style="font-size:16px; font-weight:900; margin-bottom:8px;">🔗 共有URLから読み込む</h3>
+      <p style="font-size:12px; color:var(--uq-gray); margin-bottom:12px;">3Dカスタムエディタで発行された共有リンクを貼り付けてください。</p>
+      <textarea id="urlInput" class="uq-input-text" style="width:100%; height:80px; padding:10px; font-size:12px; margin-bottom:14px;" placeholder="https://..."></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="uq-btn" onclick="closeUrlModal()">キャンセル</button>
+        <button class="uq-btn primary" onclick="loadFromUrl()">読み込む</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- QR SCAN MODAL -->
+  <div class="uq-modal-overlay" id="qrModal">
+    <div class="uq-modal-card">
+      <h3 style="font-size:16px; font-weight:900; margin-bottom:8px;">📷 QRコードを読み取る</h3>
+      <p style="font-size:12px; color:var(--uq-gray); margin-bottom:12px;">3Dカスタムエディタで発行されたQRコードをカメラにかざしてください。</p>
+      <div class="uq-qr-scan-frame">
+        <video id="qrVideo" playsinline autoplay muted></video>
+        <div class="uq-qr-scan-box"></div>
+      </div>
+      <canvas id="qrCanvas" style="display:none;"></canvas>
+      <p id="qrStatus">カメラを起動しています…</p>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="uq-btn" onclick="closeQrModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER (8 items) -->
+  <div class="uq-drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+  <aside class="uq-drawer" id="sideDrawer">
+    <div class="uq-drawer-header">
+      <span class="uq-drawer-title">メニュー</span>
+      <button class="uq-icon-btn" onclick="toggleDrawer()" aria-label="閉じる">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="uq-drawer-body">
+      <div class="uq-drawer-section-label">PAGE SELECT</div>
+      <a href="index.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">accessibility_new</span>
+        <span>一般用（標準モード）</span>
+      </a>
+      <a href="中高生.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">school</span>
+        <span>中高生用（やさしい解説）</span>
+      </a>
+      <a href="カスタム.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span>3Dカスタマイズ</span>
+      </a>
+      <a href="プレビュー.html" class="uq-drawer-link active">
+        <span class="material-symbols-outlined">visibility</span>
+        <span>閲覧専用ビュー</span>
+      </a>
+      <a href="マイリスト.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">bookmarks</span>
+        <span>マイリスト・保存済み</span>
+      </a>
+      <a href="稽古ログ.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">edit_calendar</span>
+        <span>稽古ログ（記録と振り返り）</span>
+      </a>
+      <a href="動画比較.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">compare</span>
+        <span>動画比較（フォームチェック）</span>
+      </a>
+      <a href="設定.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">settings</span>
+        <span>設定（テーマ・文字サイズ）</span>
+      </a>
+    </div>
+  </aside>
+
+  <div id="toast"></div>
+
+  <!-- THREE.JS -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    function defaultStage() {
+      return {
+        desc: '', analogy: '', advice: '', muscleNote: '', memo: '',
+        tenouchiWarning: '', tenouchi: [], miss: [],
+        primaryMuscles: [], secondaryMuscles: [], muscleMemos: {}
+      };
+    }
+
+    const STAGES_BASE = [
+      { name: "足踏み", en: "Ashibumi", frame: 1 },
+      { name: "胴作り", en: "Dozukuri", frame: 10 },
+      { name: "弓構え", en: "Yugamae", frame: 20 },
+      { name: "打ち起こし", en: "Uchiokoshi", frame: 30 },
+      { name: "引き分け", en: "Hikiwake", frame: 40 },
+      { name: "会", en: "Kai", frame: 50 },
+      { name: "離れ", en: "Hanare", frame: 60 },
+      { name: "残心", en: "Zanshin", frame: 70 },
+    ];
+
+    const MUSCLE_NODES = {
+      大腿四頭筋:      ['筋_大腿四頭筋_L','筋_大腿四頭筋_R'],
+      ハムストリングス:['筋_ハムストリングス_L','筋_ハムストリングス_R'],
+      大殿筋:          ['筋_大殿筋_L','筋_大殿筋_R'],
+      内転筋:          ['筋_内転筋_L','筋_内転筋_R'],
+      腸腰筋:          ['筋_腸腰筋_L','筋_腸腰筋_R'],
+      脊柱起立筋:      ['筋_脊柱起立筋'],
+      腹横筋:          ['筋_腹横筋'],
+      腹直筋:          ['筋_腹直筋'],
+      外腹斜筋:        ['筋_外腹斜筋_L','筋_外腹斜筋_R'],
+      多裂筋:          ['筋_多裂筋'],
+      僧帽筋上部:      ['筋_僧帽筋_上部'],
+      僧帽筋中下部:    ['筋_僧帽筋_中下部'],
+      菱形筋:          ['筋_菱形筋'],
+      広背筋:          ['筋_広背筋_L','筋_広背筋_R'],
+      大胸筋:          ['筋_大胸筋_L','筋_大胸筋_R'],
+      前鋸筋:          ['筋_前鋸筋_L','筋_前鋸筋_R'],
+      三角筋:          ['筋_三角筋_L','筋_三角筋_R'],
+      大円筋:          ['筋_大円筋_L','筋_大円筋_R'],
+      小円筋:          ['筋_小円筋_L','筋_小円筋_R'],
+      棘上筋:          ['筋_棘上筋_L','筋_棘上筋_R'],
+      棘下筋:          ['筋_棘下筋_L','筋_棘下筋_R'],
+      肩甲下筋:        ['筋_肩甲下筋_L','筋_肩甲下筋_R'],
+      上腕三頭筋:      ['筋_上腕三頭筋_L','筋_上腕三頭筋_R'],
+      上腕二頭筋:      ['筋_上腕二頭筋_L','筋_上腕二頭筋_R'],
+      腕橈骨筋:        ['筋_腕橈骨筋_L','筋_腕橈骨筋_R'],
+      胸鎖乳突筋:      ['筋_胸鎖乳突筋_L','筋_胸鎖乳突筋_R'],
+    };
+
+    const NODE_TO_GROUP = new Map();
+    for (const [group, nodes] of Object.entries(MUSCLE_NODES)) {
+      for (const n of nodes) NODE_TO_GROUP.set(n, group);
+    }
+
+    const COLOR_PRIMARY = new THREE.Color(0xE60012);
+    const COLOR_SECONDARY = new THREE.Color(0xF59E0B);
+    const FPS = 24;
+    const MAX_FRAME = 80;
+    const MAX_TIME = MAX_FRAME / FPS;
+
+    let currentStage = 0;
+    let loadedModel = null;
+    let userData = null;
+    const originalMaterials = new Map();
+    let mixer, animationAction;
+    let defaultCamPos, defaultTargetPos;
+
+    const container = document.getElementById('viewer');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera.position.set(0, 1.0, 4.0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(5, 8, 5);
+    scene.add(dirLight);
+    const backLight = new THREE.DirectionalLight(0x8fb8d8, 0.6);
+    backLight.position.set(-4, 3, -6);
+    scene.add(backLight);
+
+    const clock = new THREE.Clock();
+
+    const manager = new THREE.LoadingManager();
+    manager.onProgress = (url, loaded, total) => {
+      if (total > 0) {
+        const pct = Math.round((loaded / total) * 100);
+        document.getElementById('loader-bar').style.width = `${pct}%`;
+        document.getElementById('loader-text').textContent = `${pct}%`;
+      }
+    };
+    manager.onLoad = () => {
+      setTimeout(() => {
+        const ls = document.getElementById('loading-screen');
+        if (ls) {
+          ls.style.opacity = '0';
+          setTimeout(() => ls.style.display = 'none', 400);
+        }
+      }, 200);
+    };
+
+    const loader = new GLTFLoader(manager);
+    loader.load('弓道基礎１.glb', (gltf) => {
+      const model = gltf.scene;
+      model.rotation.x = Math.PI / 2;
+      scene.add(model);
+      loadedModel = model;
+
+      model.traverse(obj => {
+        if (!obj.isMesh) return;
+        if (Array.isArray(obj.material)) {
+          obj.material = obj.material.map(mat => {
+            const cloned = mat.clone();
+            originalMaterials.set(cloned.uuid, {
+              color: cloned.color.clone(),
+              transparent: cloned.transparent,
+              opacity: cloned.opacity,
+            });
+            return cloned;
+          });
+        } else {
+          const cloned = obj.material.clone();
+          originalMaterials.set(cloned.uuid, {
+            color: cloned.color.clone(),
+            transparent: cloned.transparent,
+            opacity: cloned.opacity,
+          });
+          obj.material = cloned;
+        }
+      });
+
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      
+      const fov = camera.fov;
+      const aspect = camera.aspect;
+      let dist = (size.y / 2) / Math.tan(Math.PI * fov / 360);
+      const horizontalFov = 2 * Math.atan(Math.tan(Math.PI * fov / 360) * aspect);
+      const distW = (size.x / 2) / Math.tan(horizontalFov / 2);
+      dist = Math.max(dist, distW) * 1.35;
+
+      controls.target.set(center.x, center.y, 0);
+      camera.position.set(center.x, center.y, dist);
+      controls.update();
+
+      defaultCamPos = camera.position.clone();
+      defaultTargetPos = controls.target.clone();
+
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(model);
+        animationAction = mixer.clipAction(gltf.animations[0]);
+        animationAction.setLoop(THREE.LoopOnce, 1);
+        animationAction.clampWhenFinished = true;
+        animationAction.timeScale = 0.25;
+        animationAction.play();
+        document.getElementById('timeline').max = MAX_TIME;
+      }
+
+      jumpToStage(0);
+      updateMuscles3D();
+    }, undefined, (err) => {
+      console.error('Failed to load GLB:', err);
+      const ls = document.getElementById('loading-screen');
+      if (ls) {
+        ls.style.opacity = '0';
+        setTimeout(() => ls.style.display = 'none', 400);
+      }
+    });
+
+    document.getElementById('fitBtn').addEventListener('click', () => {
+      if (defaultCamPos && defaultTargetPos) {
+        camera.position.copy(defaultCamPos);
+        controls.target.copy(defaultTargetPos);
+        controls.update();
+      }
+    });
+
+    function updateMuscles3D() {
+      if (!loadedModel) return;
+      const d = userData ? userData[currentStage] : null;
+      const pri = new Set(d ? (d.primaryMuscles || []) : []);
+      const sec = new Set(d ? (d.secondaryMuscles || []) : []);
+
+      loadedModel.traverse(obj => {
+        if (obj.name === 'kyudo_male_base') {
+          obj.visible = true;
+          return;
+        }
+        if (!obj.isMesh) return;
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        const group = NODE_TO_GROUP.get(obj.name);
+
+        if (group) {
+          if (pri.has(group)) {
+            obj.visible = true;
+            mats.forEach(m => { m.color.copy(COLOR_PRIMARY); m.transparent = false; m.opacity = 1; m.needsUpdate = true; });
+          } else if (sec.has(group)) {
+            obj.visible = true;
+            mats.forEach(m => { m.color.copy(COLOR_SECONDARY); m.transparent = false; m.opacity = 1; m.needsUpdate = true; });
+          } else {
+            if (!userData) {
+              obj.visible = true;
+              const orig = originalMaterials.get(mats[0].uuid);
+              if (orig) mats.forEach(m => { m.color.copy(orig.color); m.transparent = orig.transparent; m.opacity = orig.opacity; m.needsUpdate = true; });
+            } else {
+              obj.visible = false;
+            }
+          }
+        } else {
+          obj.visible = true;
+        }
+      });
+    }
+
+    function jumpToStage(idx) {
+      if (!animationAction || !mixer) return;
+      const t = STAGES_BASE[idx].frame / FPS;
+      animationAction.paused = false;
+      animationAction.time = t;
+      mixer.update(0);
+      animationAction.paused = true;
+      document.getElementById('timeline').value = t;
+      document.getElementById('timeLabel').textContent = `${t.toFixed(2)}s`;
+      document.getElementById('currentStageChip').textContent = `0${idx + 1} ${STAGES_BASE[idx].name}`;
+    }
+
+    function selectStage(idx) {
+      currentStage = idx;
+      document.querySelectorAll('.uq-stage-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+      jumpToStage(idx);
+      updateMuscles3D();
+      renderContent(idx);
+    }
+
+    function buildStageNav() {
+      const nav = document.getElementById('stageTabs');
+      nav.innerHTML = '';
+      STAGES_BASE.forEach((s, i) => {
+        const tab = document.createElement('div');
+        const hasData = userData && (userData[i].desc || (userData[i].primaryMuscles && userData[i].primaryMuscles.length));
+        tab.className = `uq-stage-tab ${i === currentStage ? 'active' : ''} ${hasData ? '' : 'empty'}`;
+        tab.innerHTML = `
+          <span class="uq-stage-tab-num">0${i + 1}</span>
+          <span class="uq-stage-tab-name">${s.name}</span>
+        `;
+        tab.onclick = () => selectStage(i);
+        nav.appendChild(tab);
+      });
+    }
+
+    function renderContent(idx) {
+      const d = userData ? userData[idx] : null;
+      const s = STAGES_BASE[idx];
+      const noteArea = document.getElementById('noteArea');
+      const welcomeBox = document.getElementById('welcomeBox');
+
+      if (!userData) {
+        welcomeBox.style.display = 'flex';
+        noteArea.style.display = 'none';
+        return;
+      }
+
+      welcomeBox.style.display = 'none';
+      noteArea.style.display = 'flex';
+
+      document.getElementById('viewDesc').innerHTML = `
+        <div class="uq-card-title">📋 ${s.name} (${s.en}) の解説</div>
+        <div style="font-size:13.5px; line-height:1.6;">${d.desc || '<span style="color:var(--text-muted)">未記入</span>'}</div>
+        ${d.analogy ? `<div class="uq-callout-box" style="margin-top:6px;">🎭 <strong>たとえ：</strong>${d.analogy}</div>` : ''}
+        ${d.advice ? `<div class="uq-callout-box tip" style="margin-top:6px;">💡 <strong>アドバイス：</strong>${d.advice}</div>` : ''}
+        ${d.memo ? `<div class="uq-callout-box science" style="margin-top:6px;">📝 <strong>自由メモ：</strong>${d.memo}</div>` : ''}
+      `;
+
+      const priTags = (d.primaryMuscles || []).map(m => {
+        const memo = d.muscleMemos && d.muscleMemos[m] ? d.muscleMemos[m] : '';
+        return `<div style="margin-bottom:6px;"><span class="uq-chip primary">🔴 ${m}</span>${memo ? `<div style="font-size:11.5px; color:var(--uq-red); margin-top:2px;">🎯 意識：${memo}</div>` : ''}</div>`;
+      }).join('');
+
+      const secTags = (d.secondaryMuscles || []).map(m => {
+        const memo = d.muscleMemos && d.muscleMemos[m] ? d.muscleMemos[m] : '';
+        return `<div style="margin-bottom:6px;"><span class="uq-chip secondary">🟡 ${m}</span>${memo ? `<div style="font-size:11.5px; color:var(--color-secondary-bright); margin-top:2px;">🎯 意識：${memo}</div>` : ''}</div>`;
+      }).join('');
+
+      document.getElementById('viewMuscles').innerHTML = `
+        <div class="uq-card-title">💪 使用する筋肉</div>
+        ${(priTags + secTags) || '<span style="color:var(--text-muted)">未選択</span>'}
+      `;
+
+      const tenItems = (d.tenouchi || []).map(t => `<div style="font-size:12.5px; padding:3px 0;"><strong>${t.icon || '✓'}</strong> ${t.text || ''}</div>`).join('');
+      document.getElementById('viewTenouchi').innerHTML = `
+        <div class="uq-card-title">🤚 手の内チェック</div>
+        ${tenItems || '<span style="color:var(--text-muted)">未記入</span>'}
+        ${d.tenouchiWarning ? `<div class="uq-warning-banner" style="margin-top:6px;">${d.tenouchiWarning}</div>` : ''}
+      `;
+
+      const missItems = (d.miss || []).map(m => `<div style="font-size:12.5px; padding:3px 0;">${m.type === 'warn' ? '⚠' : '💡'} ${m.text || ''}</div>`).join('');
+      document.getElementById('viewMiss').innerHTML = `
+        <div class="uq-card-title">⚠ ミス・注意点</div>
+        ${missItems || '<span style="color:var(--text-muted)">未記入</span>'}
+      `;
+    }
+
+    function onDataLoaded(name) {
+      buildStageNav();
+      selectStage(0);
+      showToast(`📖 「${name}」を読み込みました`);
+    }
+
+    window.loadFromFile = function(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.data) {
+            userData = Array.isArray(parsed.data) ? parsed.data.map(d => ({ ...defaultStage(), ...d })) : Array.from({length:8}, () => defaultStage());
+            onDataLoaded(file.name);
+          }
+        } catch (err) {
+          showToast('❌ 読み込み失敗');
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    // 共有URL文字列（テキスト入力・QR読み取りの両方から共通で使う）を読み込む
+    function importFromUrlString(urlString) {
+      if (!urlString) return false;
+      try {
+        const url = new URL(urlString);
+        const dParam = url.searchParams.get('d');
+        if (dParam) {
+          const json = LZString.decompressFromEncodedURIComponent(dParam);
+          const parsed = JSON.parse(json);
+          if (parsed.data) {
+            userData = parsed.data.map(d => ({ ...defaultStage(), ...d }));
+            onDataLoaded('共有リンク');
+            return true;
+          }
+        }
+      } catch (err) {
+        /* fall through to false */
+      }
+      return false;
+    }
+
+    window.loadFromUrl = function() {
+      const urlString = document.getElementById('urlInput').value.trim();
+      if (!urlString) return;
+      if (importFromUrlString(urlString)) {
+        closeUrlModal();
+      } else {
+        showToast('❌ URLの読み込みに失敗しました');
+      }
+    };
+
+    // ---- QRコード読み取り ----
+    let qrStream = null;
+    let qrScanning = false;
+    let qrAnimId = null;
+
+    window.openQrModal = async function() {
+      document.getElementById('qrModal').classList.add('show');
+      const statusEl = document.getElementById('qrStatus');
+      const video = document.getElementById('qrVideo');
+      statusEl.textContent = 'カメラを起動しています…';
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusEl.textContent = '❌ このブラウザはカメラ読み取りに対応していません';
+        return;
+      }
+
+      try {
+        qrStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+        video.srcObject = qrStream;
+        await video.play();
+        statusEl.textContent = 'QRコードを枠内に写してください';
+        qrScanning = true;
+        scanQrFrame();
+      } catch (err) {
+        statusEl.textContent = '❌ カメラを起動できませんでした（権限設定をご確認ください）';
+      }
+    };
+
+    window.closeQrModal = function() {
+      document.getElementById('qrModal').classList.remove('show');
+      stopQrScan();
+    };
+
+    function stopQrScan() {
+      qrScanning = false;
+      if (qrAnimId) {
+        cancelAnimationFrame(qrAnimId);
+        qrAnimId = null;
+      }
+      if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+      }
+      const video = document.getElementById('qrVideo');
+      if (video) video.srcObject = null;
+    }
+
+    function scanQrFrame() {
+      if (!qrScanning) return;
+      const video = document.getElementById('qrVideo');
+      const canvas = document.getElementById('qrCanvas');
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR ? jsQR(imageData.data, imageData.width, imageData.height) : null;
+        if (code && code.data) {
+          handleQrResult(code.data);
+          return;
+        }
+      }
+      qrAnimId = requestAnimationFrame(scanQrFrame);
+    }
+
+    function handleQrResult(text) {
+      stopQrScan();
+      window.closeQrModal();
+      if (importFromUrlString(text)) {
+        showToast('📷 QRコードを読み込みました');
+      } else {
+        showToast('❌ QRコードの内容を読み込めませんでした');
+      }
+    }
+
+    window.saveToFavorites = function() {
+      if (!userData) return;
+      const favName = prompt('お気に入りの名前を入力', `ノート_${new Date().toLocaleDateString()}`);
+      if (!favName) return;
+      const favorites = JSON.parse(localStorage.getItem('kyudo_favorites') || '[]');
+      favorites.push({ id: Date.now(), name: favName, data: userData });
+      localStorage.setItem('kyudo_favorites', JSON.stringify(favorites));
+      showToast('⭐ お気に入りに保存しました');
+    };
+
+    function checkUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('d');
+      if (raw) {
+        try {
+          const json = LZString.decompressFromEncodedURIComponent(raw);
+          const parsed = JSON.parse(json);
+          if (parsed.data) {
+            userData = parsed.data.map(d => ({ ...defaultStage(), ...d }));
+            onDataLoaded('共有リンク');
+          }
+        } catch(e) {}
+      }
+      const localId = params.get('localId');
+      if (localId) {
+        try {
+          const favorites = JSON.parse(localStorage.getItem('kyudo_favorites') || '[]');
+          const fav = favorites.find(f => f.id == localId);
+          if (fav) {
+            userData = fav.data.map(d => ({ ...defaultStage(), ...d }));
+            onDataLoaded(fav.name);
+          }
+        } catch(e) {}
+      }
+    }
+
+    // Playback
+    document.getElementById('playBtn').addEventListener('click', () => {
+      if (animationAction) { animationAction.timeScale = 0.25; animationAction.paused = false; }
+      document.getElementById('playBtn').classList.add('active-red');
+      document.getElementById('pauseBtn').classList.remove('active-red');
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      if (animationAction) animationAction.paused = true;
+      document.getElementById('pauseBtn').classList.add('active-red');
+      document.getElementById('playBtn').classList.remove('active-red');
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (animationAction) {
+        animationAction.stop();
+        animationAction.play();
+        animationAction.paused = false;
+        document.getElementById('playBtn').classList.add('active-red');
+        document.getElementById('pauseBtn').classList.remove('active-red');
+      }
+    });
+
+    document.getElementById('timeline').addEventListener('input', (e) => {
+      if (animationAction && mixer) {
+        animationAction.paused = false;
+        animationAction.time = parseFloat(e.target.value);
+        mixer.update(0);
+        animationAction.paused = true;
+        document.getElementById('timeLabel').textContent = `${animationAction.time.toFixed(2)}s`;
+      }
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if (mixer && animationAction && !animationAction.paused) {
+        mixer.update(delta);
+        if (animationAction.time >= MAX_TIME) {
+          animationAction.paused = false;
+          animationAction.time = MAX_TIME;
+          mixer.update(0);
+          animationAction.paused = true;
+          document.getElementById('playBtn').classList.remove('active-red');
+          document.getElementById('pauseBtn').classList.add('active-red');
+        }
+        const t = Math.min(animationAction.time, MAX_TIME);
+        document.getElementById('timeline').value = t;
+        document.getElementById('timeLabel').textContent = `${t.toFixed(2)}s`;
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    function handleResize() {
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleResize, 150);
+      setTimeout(handleResize, 500);
+    });
+
+    setTimeout(handleResize, 100);
+    animate();
+
+    buildStageNav();
+    checkUrlParams();
+  </script>
+
+  <!-- Global UI Helpers -->
+  <script>
+    function toggleDrawer() {
+      const drawer = document.getElementById('sideDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+      }
+    }
+
+    function openUrlModal() {
+      document.getElementById('urlModal').classList.add('show');
+    }
+
+    function closeUrlModal() {
+      document.getElementById('urlModal').classList.remove('show');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function updateTheme(isDark) {
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+        localStorage.setItem('kyudo_dark_mode', '1');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeIcon.textContent = 'dark_mode';
+        localStorage.setItem('kyudo_dark_mode', '0');
+      }
+    }
+
+    if (localStorage.getItem('kyudo_dark_mode') === '1') {
+      updateTheme(true);
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      updateTheme(!isDark);
+    });
+  </script>
+</body>
+</html>

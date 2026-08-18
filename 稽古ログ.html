@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>リアル八節くん ─ 稽古ログ</title>
+  <meta name="description" content="弓道の稽古の日付・場所・本数・課題や気づきを記録して、日々の成長や変化を振り返ることができます。" />
+  <meta name="keywords" content="弓道, 射法八節, 稽古ログ, 練習日誌, 成長記録, UNIQLO UI" />
+
+  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+  <script src="sync.js"></script>
+  <script src="tutorial.js"></script>
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" href="apple-icon.png">
+  <meta name="msapplication-TileImage" content="ms-icon-144x144.png">  <meta name="theme-color" content="#ffffff">
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+
+  <style>
+    /* ================================================================
+       UNIQLO STYLE DESIGN SYSTEM & TOKENS (稽古ログ版)
+       ================================================================ */
+    :root {
+      --uq-red: #E60012;
+      --uq-red-hover: #CC0010;
+      --uq-red-light: #FFF0F0;
+      --uq-black: #111111;
+      --uq-dark-gray: #333333;
+      --uq-gray: #666666;
+      --uq-light-gray: #999999;
+      --uq-border: #E5E5E5;
+      --uq-border-light: #F0F0F0;
+      --uq-bg: #FFFFFF;
+      --uq-surface: #F8F8F8;
+      --uq-surface-subtle: #FAFAFA;
+      
+      --primary: var(--uq-red);
+      --text: var(--uq-black);
+      --text-sub: var(--uq-gray);
+      --text-muted: var(--uq-light-gray);
+      --line: var(--uq-border);
+      --line-subtle: var(--uq-border-light);
+      --bg: var(--uq-bg);
+      --panel: var(--uq-surface);
+
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+      --radius-pill: 9999px;
+
+      --font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-scale: 1;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    [data-theme="dark"] {
+      --uq-black: #F5F5F5;
+      --uq-dark-gray: #E0E0E0;
+      --uq-gray: #A0A0A0;
+      --uq-light-gray: #666666;
+      --uq-border: #2A2A2A;
+      --uq-border-light: #222222;
+      --uq-bg: #121212;
+      --uq-surface: #1C1C1C;
+      --uq-surface-subtle: #181818;
+      --uq-red-light: rgba(230, 0, 18, 0.15);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.8);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-family);
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+      transition: all 0.15s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      user-select: none;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* HEADER */
+    .uq-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 52px;
+      flex-shrink: 0;
+    }
+
+    .uq-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .uq-logo-box {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .uq-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .uq-app-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .uq-app-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-tag-badge {
+      background: var(--uq-black);
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: var(--radius-sm);
+    }
+
+    [data-theme="dark"] .uq-tag-badge {
+      background: var(--uq-red);
+    }
+
+    .uq-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .uq-icon-btn {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+    }
+
+    .uq-icon-btn:hover {
+      background: var(--panel);
+    }
+
+    /* MAIN CONTAINER */
+    .uq-main-container {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .uq-section-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+
+    /* Stats Grid */
+    .uq-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .uq-stat-box {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 14px 12px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .uq-stat-val {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--uq-red);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .uq-stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-weight: 700;
+    }
+
+    /* Card Panels */
+    .uq-card-group {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .uq-input-text {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .uq-input-text:focus {
+      border-color: var(--uq-red);
+    }
+
+    .uq-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .uq-btn:hover {
+      background: var(--panel);
+      border-color: var(--uq-gray);
+    }
+
+    .uq-btn.primary {
+      background: var(--uq-red) !important;
+      color: #FFFFFF !important;
+      border-color: var(--uq-red) !important;
+    }
+
+    .uq-btn.primary:hover {
+      background: var(--uq-red-hover) !important;
+    }
+
+    .uq-btn.danger {
+      color: var(--uq-red);
+      background: var(--uq-red-light);
+      border-color: rgba(230,0,18,0.2);
+    }
+
+    /* Tag Chips */
+    .uq-tag-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .uq-chip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text-sub);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .uq-chip-btn.selected {
+      background: var(--uq-red);
+      color: #FFFFFF;
+      border-color: var(--uq-red);
+    }
+
+    /* Log Item Cards */
+    .uq-log-item {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 10px;
+    }
+
+    .uq-log-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .uq-log-date {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .uq-log-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-family: 'Inter', monospace;
+    }
+
+    .uq-log-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .uq-log-tag-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text-sub);
+    }
+
+    .uq-log-memo {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+      padding-top: 4px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .uq-empty-box {
+      border: 2px dashed var(--line);
+      border-radius: var(--radius-md);
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: var(--panel);
+    }
+
+    /* DRAWER */
+    .uq-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .uq-drawer-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .uq-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100%;
+      background: var(--bg);
+      z-index: 2001;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .uq-drawer.open {
+      right: 0;
+    }
+
+    .uq-drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .uq-drawer-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .uq-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .uq-drawer-section-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 20px 6px;
+    }
+
+    .uq-drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+
+    .uq-drawer-link:hover {
+      background: var(--panel);
+    }
+
+    .uq-drawer-link.active {
+      color: var(--uq-red);
+      background: var(--uq-red-light);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="uq-header">
+    <div class="uq-brand">
+      <div class="uq-logo-box"><img src="favicon-96x96.png" alt="リアル八節くん" width="30" height="30"></div>
+      <div class="uq-app-title-wrap">
+        <span class="uq-app-title">
+          リアル八節くん
+          <span class="uq-tag-badge">稽古ログ</span>
+        </span>
+      </div>
+    </div>
+    <div class="uq-header-actions">
+      <button class="uq-icon-btn" id="themeToggleBtn" aria-label="テーマ切替" title="ダーク/ライト切替">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+      <button class="uq-icon-btn" id="menuToggleBtn" onclick="toggleDrawer()" aria-label="メニュー">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="uq-main-container">
+    <!-- SECTION 1: 集計統計 -->
+    <section>
+      <h2 class="uq-section-title">
+        <span class="material-symbols-outlined" style="font-size:16px;">analytics</span>
+        稽古の集計
+      </h2>
+      <div class="uq-stats-grid">
+        <div class="uq-stat-box">
+          <div class="uq-stat-val" id="statThisMonth">0</div>
+          <div class="uq-stat-label">今月の稽古</div>
+        </div>
+        <div class="uq-stat-box">
+          <div class="uq-stat-val" id="statTotalCount">0</div>
+          <div class="uq-stat-label">累計稽古回数</div>
+        </div>
+        <div class="uq-stat-box">
+          <div class="uq-stat-val" id="statTotalArrows">0</div>
+          <div class="uq-stat-label">累計射数 (本)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: ログ入力 -->
+    <section>
+      <button class="uq-btn primary" id="toggleFormBtn" style="margin-bottom:12px;">
+        <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+        新しい稽古記録を書く
+      </button>
+
+      <div class="uq-card-group" id="formPanel" style="display:none;">
+        <div style="font-size:14px; font-weight:800; color:var(--text);" id="formTitle">🎯 稽古の記録</div>
+
+        <div>
+          <label style="font-size:11px; font-weight:800; color:var(--text-sub); display:block; margin-bottom:4px;">日付</label>
+          <input type="date" id="fDate" class="uq-input-text">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:var(--text-sub); display:block; margin-bottom:4px;">道場・場所</label>
+            <input type="text" id="fPlace" class="uq-input-text" placeholder="例：〇〇弓道場">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:var(--text-sub); display:block; margin-bottom:4px;">射数（本）</label>
+            <input type="number" id="fArrows" class="uq-input-text" placeholder="例：20" min="0">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:11px; font-weight:800; color:var(--text-sub); display:block; margin-bottom:4px;">課題・テーマタグ</label>
+          <div class="uq-tag-chips-wrap" id="tagChipsWrap" style="margin-bottom:8px;"></div>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="fNewTag" class="uq-input-text" placeholder="新しいタグを追加...">
+            <button type="button" class="uq-btn" id="addTagBtn" style="width:auto; flex-shrink:0;">追加</button>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:11px; font-weight:800; color:var(--text-sub); display:block; margin-bottom:4px;">気づき・指導メモ</label>
+          <textarea id="fMemo" class="uq-input-text" rows="3" placeholder="意識したポイントや先生からの指導内容などをメモ"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" class="uq-btn" id="cancelFormBtn" style="width:auto;">キャンセル</button>
+          <button type="button" class="uq-btn primary" id="saveLogBtn" style="width:auto;">保存する</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: ログ一覧 -->
+    <section>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 class="uq-section-title" style="margin-bottom:0; border:none; padding:0;">
+          <span class="material-symbols-outlined" style="font-size:16px;">history</span>
+          稽古の履歴
+        </h2>
+        <select class="uq-input-text" id="tagFilter" style="width:auto; max-width:180px; padding:4px 8px; font-size:11.5px;"></select>
+      </div>
+
+      <div id="logs-root"></div>
+    </section>
+  </main>
+
+
+  <!-- DRAWER (8 items) -->
+  <div class="uq-drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+  <aside class="uq-drawer" id="sideDrawer">
+    <div class="uq-drawer-header">
+      <span class="uq-drawer-title">メニュー</span>
+      <button class="uq-icon-btn" onclick="toggleDrawer()" aria-label="閉じる">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="uq-drawer-body">
+      <div class="uq-drawer-section-label">PAGE SELECT</div>
+      <a href="index.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">accessibility_new</span>
+        <span>一般用（標準モード）</span>
+      </a>
+      <a href="中高生.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">school</span>
+        <span>中高生用（やさしい解説）</span>
+      </a>
+      <a href="カスタム.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span>3Dカスタマイズ</span>
+      </a>
+      <a href="プレビュー.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">visibility</span>
+        <span>閲覧専用ビュー</span>
+      </a>
+      <a href="マイリスト.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">bookmarks</span>
+        <span>マイリスト・保存済み</span>
+      </a>
+      <a href="稽古ログ.html" class="uq-drawer-link active">
+        <span class="material-symbols-outlined">edit_calendar</span>
+        <span>稽古ログ（記録と振り返り）</span>
+      </a>
+      <a href="動画比較.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">compare</span>
+        <span>動画比較（フォームチェック）</span>
+      </a>
+      <a href="設定.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">settings</span>
+        <span>設定（テーマ・文字サイズ）</span>
+      </a>
+    </div>
+  </aside>
+
+  <script>
+    const LOGS_KEY = 'kyudo_practice_logs_v1';
+    const DEFAULT_TAGS = ['会が短い', '早気気味', '胴造りが崩れる', '弓構えが浅い', '残心が乱れる', '手の内が緩む'];
+    const CUSTOM_TAGS_KEY = 'kyudo_practice_custom_tags_v1';
+
+    let selectedTags = [];
+    let filterTag = null;
+    let editingId = null;
+
+    function loadLogs() {
+      try {
+        const raw = localStorage.getItem(LOGS_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+
+    function saveLogs(logs) {
+      localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+    }
+
+    function loadCustomTags() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_TAGS_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+
+    function saveCustomTags(tags) {
+      localStorage.setItem(CUSTOM_TAGS_KEY, JSON.stringify(tags));
+    }
+
+    function allKnownTags() {
+      const logs = loadLogs();
+      const fromLogs = logs.flatMap(l => l.tags || []);
+      return Array.from(new Set([...DEFAULT_TAGS, ...loadCustomTags(), ...fromLogs]));
+    }
+
+    function usedTagsWithCounts() {
+      const logs = loadLogs();
+      const counts = {};
+      logs.forEach(l => (l.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+      return Object.keys(counts).sort((a, b) => a.localeCompare(b, 'ja')).map(t => ({ tag: t, count: counts[t] }));
+    }
+
+    function formatDateJp(dateStr) {
+      if (!dateStr) return '（日付未設定）';
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return dateStr;
+      const w = ['日','月','火','水','木','金','土'][d.getDay()];
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 (${w})`;
+    }
+
+    function todayStr() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    function renderTagPicker() {
+      const wrap = document.getElementById('tagChipsWrap');
+      if (!wrap) return;
+      const tags = allKnownTags();
+      wrap.innerHTML = tags.map(t => `
+        <span class="uq-chip-btn ${selectedTags.includes(t) ? 'selected' : ''}" onclick="toggleTag('${t}')">
+          🏷 ${t}
+        </span>
+      `).join('');
+    }
+
+    window.toggleTag = function(t) {
+      if (selectedTags.includes(t)) {
+        selectedTags = selectedTags.filter(x => x !== t);
+      } else {
+        selectedTags.push(t);
+      }
+      renderTagPicker();
+    };
+
+    document.getElementById('addTagBtn').addEventListener('click', () => {
+      const input = document.getElementById('fNewTag');
+      const val = input.value.trim();
+      if (!val) return;
+      const custom = loadCustomTags();
+      if (!custom.includes(val)) {
+        custom.push(val);
+        saveCustomTags(custom);
+      }
+      if (!selectedTags.includes(val)) selectedTags.push(val);
+      input.value = '';
+      renderTagPicker();
+    });
+
+    const formPanel = document.getElementById('formPanel');
+    document.getElementById('toggleFormBtn').addEventListener('click', () => {
+      editingId = null;
+      resetForm();
+      document.getElementById('formTitle').textContent = '🎯 稽古の記録';
+      formPanel.style.display = formPanel.style.display === 'none' ? 'flex' : 'none';
+    });
+
+    document.getElementById('cancelFormBtn').addEventListener('click', () => {
+      formPanel.style.display = 'none';
+      editingId = null;
+      resetForm();
+    });
+
+    function resetForm() {
+      document.getElementById('fDate').value = todayStr();
+      document.getElementById('fPlace').value = '';
+      document.getElementById('fArrows').value = '';
+      document.getElementById('fMemo').value = '';
+      selectedTags = [];
+      renderTagPicker();
+    }
+
+    document.getElementById('saveLogBtn').addEventListener('click', () => {
+      const date = document.getElementById('fDate').value || todayStr();
+      const place = document.getElementById('fPlace').value.trim();
+      const arrows = parseInt(document.getElementById('fArrows').value, 10) || 0;
+      const memo = document.getElementById('fMemo').value.trim();
+
+      let logs = loadLogs();
+      if (editingId) {
+        logs = logs.map(l => l.id === editingId ? { ...l, date, place, arrows, tags: [...selectedTags], memo, updatedAt: Date.now() } : l);
+      } else {
+        logs.unshift({
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          date, place, arrows, tags: [...selectedTags], memo,
+          createdAt: Date.now(), updatedAt: Date.now(),
+        });
+      }
+      saveLogs(logs);
+      formPanel.style.display = 'none';
+      editingId = null;
+      resetForm();
+      render();
+    });
+
+    function renderTagFilter() {
+      const root = document.getElementById('tagFilter');
+      const tagInfo = usedTagsWithCounts();
+      if (!tagInfo.length) {
+        root.innerHTML = '<option value="">すべてのタグ</option>';
+        return;
+      }
+      const options = ['<option value="">すべてのタグ</option>']
+        .concat(tagInfo.map(({ tag: t, count }) => `<option value="${t}" ${filterTag === t ? 'selected' : ''}>🏷 ${t} (${count})</option>`));
+      root.innerHTML = options.join('');
+      root.value = filterTag || '';
+    }
+
+    document.getElementById('tagFilter').addEventListener('change', (e) => {
+      filterTag = e.target.value || null;
+      render();
+    });
+
+    function renderStats(logs) {
+      const now = new Date();
+      const thisMonth = logs.filter(l => {
+        if (!l.date) return false;
+        const d = new Date(l.date + 'T00:00:00');
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      }).length;
+      const totalArrows = logs.reduce((sum, l) => sum + (l.arrows || 0), 0);
+      document.getElementById('statThisMonth').textContent = thisMonth;
+      document.getElementById('statTotalCount').textContent = logs.length;
+      document.getElementById('statTotalArrows').textContent = totalArrows;
+    }
+
+    function render() {
+      const allLogs = loadLogs().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
+      renderStats(allLogs);
+      renderTagFilter();
+
+      const logs = filterTag ? allLogs.filter(l => (l.tags || []).includes(filterTag)) : allLogs;
+      const root = document.getElementById('logs-root');
+
+      if (!logs.length) {
+        root.innerHTML = `<div class="uq-empty-box">${filterTag ? 'このタグの記録はありません' : 'まだ記録がありません。「新しい稽古記録を書く」から入力してください。'}</div>`;
+        return;
+      }
+
+      root.innerHTML = logs.map(l => `
+        <div class="uq-log-item">
+          <div class="uq-log-head">
+            <div>
+              <div class="uq-log-date">${formatDateJp(l.date)}</div>
+              <div class="uq-log-meta">${l.place ? l.place + ' ・ ' : ''}${l.arrows || 0} 本</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="uq-btn" style="padding:4px 8px; font-size:11px;" onclick="editLog(${l.id})">編集</button>
+              <button class="uq-btn danger" style="padding:4px 8px; font-size:11px;" onclick="deleteLog(${l.id})">削除</button>
+            </div>
+          </div>
+          ${(l.tags && l.tags.length) ? `<div class="uq-log-tags">${l.tags.map(t => `<span class="uq-log-tag-pill">🏷 ${t}</span>`).join('')}</div>` : ''}
+          ${l.memo ? `<div class="uq-log-memo">${l.memo}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.editLog = function(id) {
+      const logs = loadLogs();
+      const l = logs.find(x => x.id === id);
+      if (!l) return;
+      editingId = id;
+      document.getElementById('formTitle').textContent = '✏️ 稽古の記録を編集';
+      document.getElementById('fDate').value = l.date || todayStr();
+      document.getElementById('fPlace').value = l.place || '';
+      document.getElementById('fArrows').value = l.arrows || '';
+      document.getElementById('fMemo').value = l.memo || '';
+      selectedTags = [...(l.tags || [])];
+      renderTagPicker();
+      formPanel.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.deleteLog = function(id) {
+      if (!confirm('この稽古記録を削除しますか？')) return;
+      const logs = loadLogs().filter(l => l.id !== id);
+      saveLogs(logs);
+      render();
+    };
+
+    resetForm();
+    render();
+
+    function toggleDrawer() {
+      const drawer = document.getElementById('sideDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+      }
+    }
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function updateTheme(isDark) {
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+        localStorage.setItem('kyudo_dark_mode', '1');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeIcon.textContent = 'dark_mode';
+        localStorage.setItem('kyudo_dark_mode', '0');
+      }
+    }
+
+    if (localStorage.getItem('kyudo_dark_mode') === '1') {
+      updateTheme(true);
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      updateTheme(!isDark);
+    });
+  </script>
+</body>
+</html>

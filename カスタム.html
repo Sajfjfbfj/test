@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>リアル八節くん | 3Dカスタム射法八節エディタ</title>
+  <meta name="description" content="射法八節の解説や筋肉の意識ポイントを自分専用にカスタマイズ。リッチテキスト編集やURL共有、複数ノート保存に対応。" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+  <!-- LZ-String (URL圧縮共有用) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
+  <!-- 3Dモデルファイルの先行読み込み -->
+  <link rel="preload" href="弓道基礎１.glb" as="fetch" crossorigin="anonymous">
+  <script src="sync.js"></script>
+  <script src="tutorial.js"></script>
+  <script src="qrcode.js"></script>
+  <meta name="theme-color" content="#ffffff">
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* ================================================================
+       UNIQLO STYLE DESIGN SYSTEM & TOKENS
+       ================================================================ */
+    :root {
+      --uq-red: #E60012;
+      --uq-red-hover: #CC0010;
+      --uq-red-light: #FFF0F0;
+      --uq-black: #111111;
+      --uq-dark-gray: #333333;
+      --uq-gray: #666666;
+      --uq-light-gray: #999999;
+      --uq-border: #E5E5E5;
+      --uq-border-light: #F0F0F0;
+      --uq-bg: #FFFFFF;
+      --uq-surface: #F8F8F8;
+      --uq-surface-subtle: #FAFAFA;
+      
+      --primary: var(--uq-red);
+      --text: var(--uq-black);
+      --text-sub: var(--uq-gray);
+      --text-muted: var(--uq-light-gray);
+      --line: var(--uq-border);
+      --line-subtle: var(--uq-border-light);
+      --bg: var(--uq-bg);
+      --panel: var(--uq-surface);
+      
+      --color-primary-muscle: #E60012;
+      --color-secondary-bright: #F59E0B;
+      --color-success: #1E8E3E;
+      --color-warning: #E37400;
+
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+
+      --font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-scale: 1;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    [data-theme="dark"] {
+      --uq-black: #F5F5F5;
+      --uq-dark-gray: #E0E0E0;
+      --uq-gray: #A0A0A0;
+      --uq-light-gray: #666666;
+      --uq-border: #2A2A2A;
+      --uq-border-light: #222222;
+      --uq-bg: #121212;
+      --uq-surface: #1C1C1C;
+      --uq-surface-subtle: #181818;
+      --uq-red-light: rgba(230, 0, 18, 0.15);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.8);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-family);
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button {
+      font-family: inherit;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+      transition: all 0.15s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      user-select: none;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* HEADER */
+    .uq-header {
+      flex: 0 0 52px;
+      height: 52px;
+      z-index: 1000;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+
+    .uq-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .uq-logo-box {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .uq-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .uq-app-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .uq-app-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-tag-badge {
+      background: var(--uq-red);
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: var(--radius-sm);
+    }
+
+    .uq-app-subtitle {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+
+    .uq-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-header-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .uq-header-btn:hover {
+      background: var(--panel);
+      border-color: var(--uq-gray);
+    }
+
+    .uq-header-btn.primary {
+      background: var(--uq-red);
+      color: #FFFFFF;
+      border-color: var(--uq-red);
+    }
+
+    .uq-header-btn.primary:hover {
+      background: var(--uq-red-hover);
+    }
+
+    .uq-notebook-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      max-width: 140px;
+    }
+
+    .uq-icon-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+    }
+
+    .uq-icon-btn:hover {
+      background: var(--panel);
+    }
+
+    /* STAGE SELECTOR */
+    .uq-stage-tabs-container {
+      flex: 0 0 44px;
+      height: 44px;
+      z-index: 990;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .uq-stage-tabs {
+      display: flex;
+      height: 100%;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .uq-stage-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .uq-stage-tab {
+      flex: 0 0 auto;
+      padding: 6px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      position: relative;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .uq-stage-tab:hover {
+      background: var(--uq-surface-subtle);
+    }
+
+    .uq-stage-tab-num {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .uq-stage-tab-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+
+    .uq-stage-tab.active {
+      border-bottom-color: var(--uq-red);
+    }
+
+    .uq-stage-tab.active .uq-stage-tab-num {
+      color: var(--uq-red);
+    }
+
+    .uq-stage-tab.active .uq-stage-tab-name {
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    /* MAIN LAYOUT */
+    .uq-main-layout {
+      flex: 1 1 0;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding-bottom: 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .uq-viewer-column {
+      display: flex;
+      flex-direction: column;
+      background: #0D1117;
+      position: sticky;
+      top: 0;
+      z-index: 800;
+      border-bottom: 1px solid var(--line);
+      height: clamp(230px, 36vh, 310px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] .uq-viewer-column {
+      background: #080C10;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+
+    #viewer {
+      flex: 1 1 0;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+      outline: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      touch-action: none;
+    }
+
+    /* MOBILE PORTRAIT: ヘッダーのボタンが多く、幅412px前後だと
+       1行に収まりきらずステージタブと重なってしまうため、
+       ラベルを消してアイコンのみに圧縮する */
+    @media (max-width: 480px) {
+      .uq-header {
+        padding: 0 10px !important;
+        gap: 6px;
+      }
+      .uq-app-subtitle {
+        display: none !important;
+      }
+      .uq-header-actions {
+        gap: 4px !important;
+      }
+      .uq-header-btn {
+        padding: 6px 8px !important;
+        gap: 0 !important;
+      }
+      .uq-header-btn span:not(.material-symbols-outlined) {
+        display: none;
+      }
+      .uq-notebook-btn {
+        max-width: 60px !important;
+        padding: 5px 6px !important;
+      }
+      .uq-notebook-btn span:not(.material-symbols-outlined) {
+        display: none;
+      }
+      .uq-icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+      }
+    }
+
+    /* DESKTOP SPLIT */
+    @media (min-width: 1024px) {
+      .uq-main-layout {
+        display: grid;
+        grid-template-columns: 55% 45%;
+        padding-bottom: 0;
+        overflow: hidden;
+      }
+      .uq-viewer-column {
+        height: 100%;
+        min-height: 0;
+        position: relative;
+        top: 0;
+        border-bottom: none;
+        border-right: 1px solid var(--line);
+        box-shadow: none;
+      }
+      .uq-content-column {
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+      }
+    }
+
+    /* LANDSCAPE MOBILE OPTIMIZATION */
+    @media (orientation: landscape) and (max-height: 600px) {
+      .uq-header {
+        flex: 0 0 38px !important;
+        height: 38px !important;
+        padding: 0 12px !important;
+      }
+      .uq-logo-box {
+        width: 22px !important;
+        height: 22px !important;
+    }
+      .uq-app-title {
+        font-size: 13px !important;
+      }
+      .uq-app-subtitle {
+        display: none !important;
+      }
+      .uq-icon-btn {
+        width: 30px !important;
+        height: 30px !important;
+      }
+
+      .uq-stage-tabs-container {
+        flex: 0 0 34px !important;
+        height: 34px !important;
+      }
+      .uq-stage-tab {
+        padding: 2px 10px !important;
+      }
+      .uq-stage-tab-name {
+        font-size: 11px !important;
+      }
+      .uq-stage-tab-num {
+        font-size: 8px !important;
+      }
+
+      .uq-main-layout {
+        display: grid !important;
+        grid-template-columns: 50% 50% !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+      }
+
+      .uq-viewer-column {
+        position: relative !important;
+        top: 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border-bottom: none !important;
+        border-right: 1px solid var(--line) !important;
+        box-shadow: none !important;
+      }
+
+      #viewer {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        position: relative !important;
+      }
+
+      .uq-controller-hud {
+        flex-shrink: 0 !important;
+        padding: 4px 10px 6px !important;
+        gap: 3px !important;
+        background: var(--bg) !important;
+      }
+      .uq-timeline-row {
+        gap: 8px !important;
+      }
+      .uq-slider {
+        height: 3px !important;
+      }
+      .uq-controls-btn-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
+      }
+      .uq-btn-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+      }
+      .uq-btn {
+        padding: 3px 8px !important;
+        min-width: 32px !important;
+        height: 26px !important;
+        font-size: 11px !important;
+        gap: 3px !important;
+      }
+      .uq-btn-label {
+        display: none !important;
+      }
+      .uq-btn .material-symbols-outlined {
+        font-size: 16px !important;
+      }
+      .uq-time-display {
+        font-size: 10px !important;
+        min-width: 36px !important;
+      }
+
+      .uq-content-column {
+        height: 100% !important;
+        min-height: 0 !important;
+        flex: 1 1 0 !important;
+        overflow-y: auto !important;
+        padding: 8px 12px 24px !important;
+      }
+    }
+
+    /* Viewer Floating Overlay */
+    .uq-viewer-overlay-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .uq-chip-status {
+      pointer-events: auto;
+      background: rgba(17, 17, 17, 0.85);
+      backdrop-filter: blur(8px);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .uq-chip-status .uq-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--uq-red);
+      box-shadow: 0 0 8px var(--uq-red);
+    }
+
+    .uq-viewer-hint {
+      pointer-events: auto;
+      background: rgba(17, 17, 17, 0.7);
+      backdrop-filter: blur(6px);
+      color: #CCCCCC;
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Controller HUD */
+    .uq-controller-hud {
+      background: var(--bg);
+      border-top: 1px solid var(--line);
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .uq-timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .uq-time-display {
+      font-family: 'Inter', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      min-width: 44px;
+    }
+
+    .uq-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--line);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .uq-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      background: var(--uq-red);
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+
+    .uq-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .uq-controls-btn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .uq-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .uq-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .uq-btn:hover {
+      background: var(--panel);
+      border-color: var(--uq-gray);
+    }
+
+    .uq-btn.primary {
+      background: var(--uq-red) !important;
+      color: #FFFFFF !important;
+      border-color: var(--uq-red) !important;
+    }
+
+    .uq-btn.primary:hover {
+      background: var(--uq-red-hover) !important;
+      border-color: var(--uq-red-hover) !important;
+    }
+
+    .uq-btn.active-red {
+      background: var(--uq-red) !important;
+      color: #FFFFFF !important;
+      border-color: var(--uq-red) !important;
+    }
+
+    [data-theme="dark"] .uq-btn {
+      background: #23272E;
+      border-color: #3B424E;
+      color: #F0F0F0;
+    }
+
+    [data-theme="dark"] .uq-btn:hover {
+      background: #2D333D;
+      border-color: #555E6E;
+    }
+
+    [data-theme="dark"] .uq-btn.primary {
+      background: var(--uq-red) !important;
+      color: #FFFFFF !important;
+      border-color: var(--uq-red) !important;
+    }
+
+    /* CONTENT / EDITOR COLUMN */
+    .uq-content-column {
+      flex: 1;
+      background: var(--bg);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Sub-tabs for Edit / Preview */
+    .uq-mode-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .uq-mode-tab {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-sub);
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    .uq-mode-tab.active {
+      background: var(--uq-black);
+      color: #FFFFFF;
+      border-color: var(--uq-black);
+    }
+
+    [data-theme="dark"] .uq-mode-tab.active {
+      background: var(--uq-red);
+      border-color: var(--uq-red);
+    }
+
+    /* Rich Text Toolbar */
+    .uq-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      flex-wrap: wrap;
+      margin-bottom: -1px;
+    }
+
+    .uq-toolbar-btn {
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      font-weight: 700;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.12s ease;
+    }
+
+    .uq-toolbar-btn:hover {
+      background: var(--panel);
+      border-color: var(--uq-gray);
+      transform: translateY(-1px);
+    }
+
+    .uq-toolbar-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Wave Underline & Text Styles */
+    u, .wavy-underline {
+      text-decoration: underline wavy var(--uq-red) !important;
+      text-underline-offset: 3.5px !important;
+    }
+
+    [data-theme="dark"] .uq-toolbar-btn {
+      background: #20242C;
+      border-color: #353B47;
+      color: #E8E8E8;
+    }
+
+    [data-theme="dark"] .uq-toolbar-btn:hover {
+      background: #2C323D;
+      border-color: #555E6E;
+    }
+
+    /* Cards & Inputs */
+    .uq-card-group {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .uq-card-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .uq-field-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .uq-rich-editor {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 10px 12px;
+      min-height: 80px;
+      line-height: 1.6;
+      outline: none;
+    }
+
+    .uq-rich-editor:focus {
+      border-color: var(--uq-red);
+    }
+
+    .uq-input-text {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .uq-input-text:focus {
+      border-color: var(--uq-red);
+    }
+
+    /* Muscle Selector */
+    .uq-chips-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .uq-selector-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text-sub);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .uq-selector-chip:hover {
+      border-color: var(--uq-gray);
+      color: var(--text);
+    }
+
+    .uq-selector-chip.primary-sel {
+      background: var(--uq-red);
+      color: #FFFFFF;
+      border-color: var(--uq-red);
+    }
+
+    .uq-selector-chip.secondary-sel {
+      background: var(--color-secondary-bright);
+      color: #FFFFFF;
+      border-color: var(--color-secondary-bright);
+    }
+
+    .uq-checkpoint-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .uq-checkpoint-del {
+      color: var(--uq-red);
+      font-size: 18px;
+      padding: 4px;
+    }
+
+    /* DRAWER */
+    .uq-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .uq-drawer-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .uq-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100%;
+      background: var(--bg);
+      z-index: 2001;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .uq-drawer.open {
+      right: 0;
+    }
+
+    .uq-drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .uq-drawer-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .uq-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .uq-drawer-section-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 20px 6px;
+    }
+
+    .uq-drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+
+    .uq-drawer-link:hover {
+      background: var(--panel);
+    }
+
+    .uq-drawer-link.active {
+      color: var(--uq-red);
+      background: var(--uq-red-light);
+    }
+
+    /* MODAL */
+    .uq-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .uq-modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .uq-modal-card {
+      background: var(--bg);
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .uq-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      color: var(--text-muted);
+    }
+
+    /* SHARE MODAL */
+    .uq-share-qr-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background: #FFFFFF;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .uq-share-qr-wrap svg {
+      width: 200px;
+      height: 200px;
+      display: block;
+    }
+
+    .uq-share-url-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .uq-share-url-input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 11.5px;
+      font-family: inherit;
+    }
+
+    .uq-share-hint {
+      font-size: 11.5px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--uq-black);
+      color: #FFFFFF;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 700;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    #loading-screen {
+      position: absolute;
+      inset: 0;
+      background: #0D1117;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.4s ease;
+    }
+
+    .uq-loader-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--uq-red);
+      border-radius: 50%;
+      animation: uqSpin 0.8s linear infinite;
+    }
+
+    @keyframes uqSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .uq-loader-text {
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="uq-header">
+    <div class="uq-brand">
+      <div class="uq-logo-box"><img src="favicon-96x96.png" alt="リアル八節くん" width="30" height="30"></div>
+      <div class="uq-app-title-wrap">
+        <span class="uq-app-title">
+          リアル八節くん
+          <span class="uq-tag-badge">3Dエディタ</span>
+        </span>
+        <span class="uq-app-subtitle">KYUDO 3D CUSTOM NOTE</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="uq-header-actions">
+      <button class="uq-notebook-btn" onclick="openNotebookModal()" title="ノートを切り替え">
+        <span class="material-symbols-outlined" style="font-size:16px;">book</span>
+        <span id="currentNotebookName">ノート1</span>
+      </button>
+      <button class="uq-header-btn" onclick="importData()" title="インポート">
+        <span class="material-symbols-outlined" style="font-size:16px;">download</span><span class="uq-btn-label">インポート</span>
+      </button>
+      <button class="uq-header-btn" onclick="openShare()" title="共有">
+        <span class="material-symbols-outlined" style="font-size:16px;">share</span><span class="uq-btn-label">共有</span>
+      </button>
+      <button class="uq-header-btn primary" onclick="saveAll()" title="保存">
+        <span class="material-symbols-outlined" style="font-size:16px;">save</span><span class="uq-btn-label">すべて保存</span>
+      </button>
+      <button class="uq-icon-btn" id="themeToggleBtn" aria-label="テーマ切替" title="ダーク/ライト切替">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+      <button class="uq-icon-btn" id="menuToggleBtn" onclick="toggleDrawer()" aria-label="メニュー">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- STAGE SELECTOR TABS -->
+  <nav class="uq-stage-tabs-container" aria-label="射法八節ステップ">
+    <div class="uq-stage-tabs" id="stageTabs"></div>
+  </nav>
+
+  <!-- MAIN LAYOUT -->
+  <main class="uq-main-layout">
+    <!-- LEFT: 3D VIEWER & CONTROLLER -->
+    <section class="uq-viewer-column" aria-label="3Dビューア">
+      <div class="uq-viewer-overlay-top">
+        <div class="uq-chip-status">
+          <span class="uq-live-dot"></span>
+          <span id="currentStageChip">第1節 足踏み</span>
+        </div>
+        <div class="uq-viewer-hint">ドラッグ回転 / ピンチ拡大</div>
+      </div>
+
+      <div id="viewer">
+        <div id="loading-screen">
+          <div class="uq-loader-spinner"></div>
+          <div class="uq-loader-text" id="loaderText">3Dモデル読み込み中...</div>
+        </div>
+      </div>
+
+      <!-- CONTROLLER HUD -->
+      <div class="uq-controller-hud">
+        <div class="uq-timeline-row">
+          <span class="uq-time-display" id="timeLabel">0.00s</span>
+          <input type="range" class="uq-slider" id="timeline" min="0" max="3.333" step="0.0416" value="0.0416" aria-label="タイムライン">
+        </div>
+        <div class="uq-controls-btn-row">
+          <div class="uq-btn-group">
+            <button class="uq-btn primary" id="playBtn" title="全体再生" aria-label="再生">
+              <span class="material-symbols-outlined" style="font-size:16px;">play_arrow</span><span class="uq-btn-label">再生</span>
+            </button>
+            <button class="uq-btn" id="pauseBtn" title="停止" aria-label="停止">
+              <span class="material-symbols-outlined" style="font-size:16px;">pause</span><span class="uq-btn-label">停止</span>
+            </button>
+            <button class="uq-btn" id="resetBtn" title="先頭に戻す" aria-label="リセット">
+              <span class="material-symbols-outlined" style="font-size:16px;">replay</span><span class="uq-btn-label">リセット</span>
+            </button>
+          </div>
+          <div class="uq-btn-group">
+            <button class="uq-btn" id="fitBtn" title="視点を中央に戻す" aria-label="視点を中央に戻す">
+              <span class="material-symbols-outlined" style="font-size:16px;">center_focus_strong</span><span class="uq-btn-label">中央</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: EDITOR & PREVIEW -->
+    <article class="uq-content-column">
+      <!-- Mode Switcher -->
+      <div class="uq-mode-tabs">
+        <button class="uq-mode-tab active" id="tabBtnEdit" onclick="switchModeTab('edit')">✏️ 編集モード</button>
+        <button class="uq-mode-tab" id="tabBtnView" onclick="switchModeTab('view')">👁 プレビュー</button>
+        <span style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="lastSavedLabel"></span>
+      </div>
+
+      <!-- EDIT PANE -->
+      <div id="paneEdit" style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Card 1: 基本解説 -->
+        <div class="uq-card-group">
+          <div class="uq-card-title">📋 この節の基本解説</div>
+          
+          <!-- 1. 動作の説明・やること -->
+          <div>
+            <div class="uq-field-label">📖 動作の説明・やること</div>
+            <div class="uq-toolbar">
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('bold', null, event)" title="太字"><b>B 太字</b></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('wavy', null, event)" title="波線"><u>〰 波線</u></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#E60012', event)" title="赤字"><span style="color:#E60012; font-weight:800;">🔴 赤字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#0066CC', event)" title="青字"><span style="color:#0066CC; font-weight:800;">🔵 青字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('marker', null, event)" title="マーカー"><span style="background:#FFF3CD; color:#111; padding:0 3px; font-weight:700;">🖍 マーカー</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('reset', null, event)" title="標準（リセット）">↩ 標準</button>
+            </div>
+            <div class="uq-rich-editor" id="f-desc" contenteditable="true"></div>
+          </div>
+
+          <!-- 2. たとえ・アナロジー（イメージ） -->
+          <div>
+            <div class="uq-field-label">🎭 たとえ・アナロジー（イメージ）</div>
+            <div class="uq-toolbar">
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('bold', null, event)" title="太字"><b>B 太字</b></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('wavy', null, event)" title="波線"><u>〰 波線</u></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#E60012', event)" title="赤字"><span style="color:#E60012; font-weight:800;">🔴 赤字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#0066CC', event)" title="青字"><span style="color:#0066CC; font-weight:800;">🔵 青字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('marker', null, event)" title="マーカー"><span style="background:#FFF3CD; color:#111; padding:0 3px; font-weight:700;">🖍 マーカー</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('reset', null, event)" title="標準（リセット）">↩ 標準</button>
+            </div>
+            <div class="uq-rich-editor" id="f-analogy" contenteditable="true" style="min-height:60px;"></div>
+          </div>
+
+          <!-- 3. コツ・自分へのアドバイス -->
+          <div>
+            <div class="uq-field-label">💡 コツ・自分へのアドバイス</div>
+            <div class="uq-toolbar">
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('bold', null, event)" title="太字"><b>B 太字</b></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('wavy', null, event)" title="波線"><u>〰 波線</u></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#E60012', event)" title="赤字"><span style="color:#E60012; font-weight:800;">🔴 赤字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#0066CC', event)" title="青字"><span style="color:#0066CC; font-weight:800;">🔵 青字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('marker', null, event)" title="マーカー"><span style="background:#FFF3CD; color:#111; padding:0 3px; font-weight:700;">🖍 マーカー</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('reset', null, event)" title="標準（リセット）">↩ 標準</button>
+            </div>
+            <div class="uq-rich-editor" id="f-advice" contenteditable="true" style="min-height:60px;"></div>
+          </div>
+
+          <!-- 4. 自由メモ -->
+          <div>
+            <div class="uq-field-label">📝 自由メモ</div>
+            <div class="uq-toolbar">
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('bold', null, event)" title="太字"><b>B 太字</b></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('wavy', null, event)" title="波線"><u>〰 波線</u></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#E60012', event)" title="赤字"><span style="color:#E60012; font-weight:800;">🔴 赤字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#0066CC', event)" title="青字"><span style="color:#0066CC; font-weight:800;">🔵 青字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('marker', null, event)" title="マーカー"><span style="background:#FFF3CD; color:#111; padding:0 3px; font-weight:700;">🖍 マーカー</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('reset', null, event)" title="標準（リセット）">↩ 標準</button>
+            </div>
+            <div class="uq-rich-editor" id="f-memo" contenteditable="true" style="min-height:70px;"></div>
+          </div>
+        </div>
+
+        <!-- Card 2: 筋肉設定 -->
+        <div class="uq-card-group">
+          <div class="uq-card-title">💪 3D筋肉の選択と意識メモ</div>
+          <p style="font-size:11px; color:var(--text-muted); margin-top:-6px;">タップすると3Dモデル上の筋肉がリアルタイムに色分けされます。</p>
+
+          <div>
+            <div class="uq-field-label" style="color:var(--uq-red);">🔴 主動筋・メインで使う筋肉</div>
+            <div class="uq-chips-selector" id="primaryMuscleGrid"></div>
+          </div>
+
+          <div style="margin-top:6px;">
+            <div class="uq-field-label" style="color:var(--color-secondary-bright);">🟡 補助・安定筋（Secondary）</div>
+            <div class="uq-chips-selector" id="secondaryMuscleGrid"></div>
+          </div>
+
+          <div id="muscleMemoArea" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
+        </div>
+
+        <!-- Card 3: 手の内 -->
+        <div class="uq-card-group">
+          <div class="uq-card-title">🤚 手の内（てのうち）チェックポイント</div>
+          <div id="tenouchiList"></div>
+          <button class="uq-btn" onclick="addCheckpoint('tenouchi')" style="align-self:flex-start;">＋ チェックポイントを追加</button>
+          
+          <div style="margin-top:8px;">
+            <div class="uq-field-label">⚠ 手の内 注意メモ</div>
+            <div class="uq-toolbar">
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('bold', null, event)" title="太字"><b>B 太字</b></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('wavy', null, event)" title="波線"><u>〰 波線</u></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#E60012', event)" title="赤字"><span style="color:#E60012; font-weight:800;">🔴 赤字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('color', '#0066CC', event)" title="青字"><span style="color:#0066CC; font-weight:800;">🔵 青字</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('marker', null, event)" title="マーカー"><span style="background:#FFF3CD; color:#111; padding:0 3px; font-weight:700;">🖍 マーカー</span></button>
+              <button type="button" class="uq-toolbar-btn" onmousedown="applyFormat('reset', null, event)" title="標準（リセット）">↩ 標準</button>
+            </div>
+            <div class="uq-rich-editor" id="f-tenouchiWarning" contenteditable="true" style="min-height:50px;"></div>
+          </div>
+        </div>
+
+        <!-- Card 4: ミス・コツ -->
+        <div class="uq-card-group">
+          <div class="uq-card-title">⚠ やりがちなミス・注意点</div>
+          <div id="missList"></div>
+          <button class="uq-btn" onclick="addCheckpoint('miss')" style="align-self:flex-start;">＋ ミス/コツを追加</button>
+        </div>
+
+        <!-- Stage Actions -->
+        <div style="display:flex; gap:8px; padding-bottom:12px;">
+          <button class="uq-btn primary" onclick="saveCurrentStage()" style="flex:1;">💾 この節を保存</button>
+          <button class="uq-btn" onclick="resetCurrentStage()">↩ リセット</button>
+        </div>
+      </div>
+
+      <!-- PREVIEW PANE -->
+      <div id="paneView" style="display:none; flex-direction:column; gap:14px;">
+        <div class="uq-card-group" id="previewDesc"></div>
+        <div class="uq-card-group" id="previewMuscles"></div>
+        <div class="uq-card-group" id="previewTenouchi"></div>
+        <div class="uq-card-group" id="previewMiss"></div>
+      </div>
+    </article>
+  </main>
+
+
+  <!-- SIDE DRAWER -->
+  <div class="uq-drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+  <aside class="uq-drawer" id="sideDrawer">
+    <div class="uq-drawer-header">
+      <span class="uq-drawer-title">メニュー</span>
+      <button class="uq-icon-btn" onclick="toggleDrawer()" aria-label="閉じる">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="uq-drawer-body">
+      <div class="uq-drawer-section-label">PAGE SELECT</div>
+      <a href="index.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">accessibility_new</span>
+        <span>一般用（標準モード）</span>
+      </a>
+      <a href="中高生.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">school</span>
+        <span>中高生用（やさしい解説）</span>
+      </a>
+      <a href="カスタム.html" class="uq-drawer-link active">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span>3Dカスタマイズ</span>
+      </a>
+      <a href="プレビュー.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">visibility</span>
+        <span>閲覧専用ビュー</span>
+      </a>
+      <a href="マイリスト.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">bookmarks</span>
+        <span>マイリスト・保存済み</span>
+      </a>
+      <a href="稽古ログ.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">edit_calendar</span>
+        <span>稽古ログ（記録と振り返り）</span>
+      </a>
+      <a href="動画比較.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">compare</span>
+        <span>動画比較（フォームチェック）</span>
+      </a>
+      <a href="設定.html" class="uq-drawer-link">
+        <span class="material-symbols-outlined">settings</span>
+        <span>設定（テーマ・文字サイズ）</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- NOTEBOOK MODAL -->
+  <div class="uq-modal-overlay" id="notebookModal" onclick="if(event.target===this) closeNotebookModal()">
+    <div class="uq-modal-card">
+      <button class="uq-icon-btn uq-modal-close" onclick="closeNotebookModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <h3 style="font-size:16px; font-weight:900; margin-bottom:12px;">📓 ノート切り替え・新規作成</h3>
+      
+      <div style="display:flex; gap:6px; margin-bottom:16px;">
+        <input type="text" id="newNotebookName" class="uq-input-text" placeholder="新しいノート名" style="flex:1;">
+        <button class="uq-btn primary" onclick="createNotebook()">作成</button>
+      </div>
+
+      <div style="font-size:12px; font-weight:700; color:var(--text-sub); margin-bottom:8px;">保存済みノート一覧</div>
+      <div id="notebookList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div class="uq-modal-overlay" id="shareModal" onclick="if(event.target===this) closeShareModal()">
+    <div class="uq-modal-card">
+      <button class="uq-icon-btn uq-modal-close" onclick="closeShareModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <h3 style="font-size:16px; font-weight:900; margin-bottom:12px;">🔗 ノートを共有</h3>
+
+      <div class="uq-share-qr-wrap" id="shareQrWrap"></div>
+
+      <div class="uq-share-url-row">
+        <input type="text" id="shareUrlInput" class="uq-share-url-input" readonly>
+        <button class="uq-header-btn primary" onclick="copyShareUrl()" style="flex-shrink:0;">
+          <span class="material-symbols-outlined" style="font-size:16px;">content_copy</span>コピー
+        </button>
+      </div>
+
+      <p class="uq-share-hint">スマホのカメラでQRコードを読み取るか、URLをコピーして送ると、相手はこのノートを「閲覧用プレビュー」でそのまま開けます。</p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- THREE.JS -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // 筋肉リスト
+    const MUSCLES = [
+      '大腿四頭筋', 'ハムストリングス', '大殿筋', '内転筋', '腸腰筋',
+      '脊柱起立筋', '腹横筋', '腹直筋', '外腹斜筋', '多裂筋',
+      '僧帽筋上部', '僧帽筋中下部', '菱形筋', '広背筋', '大胸筋',
+      '前鋸筋', '三角筋', '大円筋', '小円筋', '棘上筋',
+      '棘下筋', '肩甲下筋', '上腕三頭筋', '上腕二頭筋', '腕橈骨筋',
+      '胸鎖乳突筋'
+    ];
+
+    const MUSCLE_NODES = {
+      大腿四頭筋:      ['筋_大腿四頭筋_L',    '筋_大腿四頭筋_R'],
+      ハムストリングス:['筋_ハムストリングス_L','筋_ハムストリングス_R'],
+      大殿筋:          ['筋_大殿筋_L',         '筋_大殿筋_R'],
+      内転筋:          ['筋_内転筋_L',         '筋_内転筋_R'],
+      腸腰筋:          ['筋_腸腰筋_L',         '筋_腸腰筋_R'],
+      脊柱起立筋:      ['筋_脊柱起立筋'],
+      腹横筋:          ['筋_腹横筋'],
+      腹直筋:          ['筋_腹直筋'],
+      外腹斜筋:        ['筋_外腹斜筋_L',       '筋_外腹斜筋_R'],
+      多裂筋:          ['筋_多裂筋'],
+      僧帽筋上部:      ['筋_僧帽筋_上部'],
+      僧帽筋中下部:    ['筋_僧帽筋_中下部'],
+      菱形筋:          ['筋_菱形筋'],
+      広背筋:          ['筋_広背筋_L',         '筋_広背筋_R'],
+      大胸筋:          ['筋_大胸筋_L',         '筋_大胸筋_R'],
+      前鋸筋:          ['筋_前鋸筋_L',         '筋_前鋸筋_R'],
+      三角筋:          ['筋_三角筋_L',         '筋_三角筋_R'],
+      大円筋:          ['筋_大円筋_L',         '筋_大円筋_R'],
+      小円筋:          ['筋_小円筋_L',         '筋_小円筋_R'],
+      棘上筋:          ['筋_棘上筋_L',         '筋_棘上筋_R'],
+      棘下筋:          ['筋_棘下筋_L',         '筋_棘下筋_R'],
+      肩甲下筋:        ['筋_肩甲下筋_L',       '筋_肩甲下筋_R'],
+      上腕三頭筋:      ['筋_上腕三頭筋_L',     '筋_上腕三頭筋_R'],
+      上腕二頭筋:      ['筋_上腕二頭筋_L',     '筋_上腕二頭筋_R'],
+      腕橈骨筋:        ['筋_腕橈骨筋_L',       '筋_腕橈骨筋_R'],
+      胸鎖乳突筋:      ['筋_胸鎖乳突筋_L',     '筋_胸鎖乳突筋_R'],
+    };
+
+    const FPS = 24;
+    const MAX_FRAME = 80;
+    const MAX_TIME = MAX_FRAME / FPS;
+
+    const STAGE_DEFAULTS = [
+      { step: "第1節", name: "足踏み", en: "Ashibumi", frame: 1, range: "F1 - F9",
+        desc: "すべての動作のスタート地点となる「立ち位置」を決めます。的（まと）に対して体を正しい向きに置き、安定した土台を作る大切な一歩です。",
+        analogy: "💬 <strong>イメージ：根っこを張った大木</strong> — 地面にしっかり根を張るように、どっしりと立つイメージで！",
+        advice: "✅ <strong>コツ：足裏均等</strong> — 足の裏全体で地面を均等に踏みしめよう。体重は足の親指の付け根あたりを意識するといいよ。",
+        memo: "",
+        primaryMuscles: ['大腿四頭筋', 'ハムストリングス', '大殿筋', '脊柱起立筋'],
+        secondaryMuscles: ['内転筋', '腸腰筋', '腹横筋', '多裂筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: [
+          'この段階では弓を持つだけ！まだ手の形は作らなくてOK。',
+          '手の力を抜き、指が緊張していないことを確認する。'
+        ],
+        tenouchiWarning: '',
+        missCheckpoints: [
+          '足を広げすぎてしまう（目安は自分の矢束の幅）',
+          '体重が前後に偏ってしまう'
+        ]
+      },
+      { step: "第2節", name: "胴作り", en: "Dozukuri", frame: 10, range: "F10 - F19",
+        desc: "腰を据えて背骨をまっすぐ伸ばし、上半身を安定させます。土台の上に柱を立てるイメージです。",
+        analogy: "💬 <strong>イメージ：五重の塔</strong> — 各階が正しく積み重なっているから倒れない。",
+        advice: "✅ <strong>コツ：頭頂からの吊り上げ</strong> — 頭のてっぺんから糸で引っ張られているイメージで。",
+        memo: "",
+        primaryMuscles: ['脊柱起立筋', '多裂筋'],
+        secondaryMuscles: ['腹横筋', '腹直筋', '外腹斜筋', '大腿四頭筋', 'ハムストリングス'],
+        muscleMemos: {},
+        tenouchiCheckpoints: ['弓は軽く持ち、手首を折ったり力まない。'],
+        tenouchiWarning: '',
+        missCheckpoints: ['アゴが上がって首が縮む', '反り腰になってしまう']
+      },
+      { step: "第3節", name: "弓構え", en: "Yugamae", frame: 20, range: "F20 - F29",
+        desc: "取懸け、手の内、物見を整えます。",
+        analogy: "💬 <strong>イメージ：嵐の前の静けさ</strong> — 静かに見えてエネルギーが満ちている。",
+        advice: "✅ <strong>コツ：肩を落として肘を張る</strong> — 両肩を下げて肘を外に張る。",
+        memo: "",
+        primaryMuscles: ['棘上筋', '棘下筋', '肩甲下筋'],
+        secondaryMuscles: ['僧帽筋上部', '菱形筋', '三角筋', '前鋸筋', '腕橈骨筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: [
+          '天文筋を弓の外角に当てる',
+          '虎口を巻き込み、下に空間を作る',
+          '親指を伸ばし角見を利かせる'
+        ],
+        tenouchiWarning: '⚠ べた握りは絶対NG！弓返りが起きなくなります。',
+        missCheckpoints: ['物見でアゴが上がる', '矢を強く押さえすぎる']
+      },
+      { step: "第4節", name: "打ち起こし", en: "Uchiokoshi", frame: 30, range: "F30 - F39",
+        desc: "両拳を約45度の高さまで均等に持ち上げます。",
+        analogy: "💬 <strong>イメージ：雲を押し上げる</strong> — 軽やかに、でも厳かに持ち上げる。",
+        advice: "✅ <strong>コツ：肩を浮かさない</strong> — 肩の根元を沈めたまま持ち上げる。",
+        memo: "",
+        primaryMuscles: ['三角筋', '前鋸筋', '脊柱起立筋'],
+        secondaryMuscles: ['僧帽筋上部', '棘上筋', '上腕三頭筋', '腹横筋', '多裂筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: ['手の内の形を崩さず手首を折らない。'],
+        tenouchiWarning: '',
+        missCheckpoints: ['左肩が浮き上がる', '胸が浮いて呼吸が浅くなる']
+      },
+      { step: "第5節", name: "引き分け", en: "Hikiwake", frame: 40, range: "F40 - F49",
+        desc: "左右均等に押し引きし、体全体で弓を引き込みます。",
+        analogy: "💬 <strong>イメージ：大河を押し分ける</strong> — 体幹の力で左右ダイナミックに開く。",
+        advice: "✅ <strong>コツ：肘主導で引く</strong> — 右肘で遠くを通るように引く。",
+        memo: "",
+        primaryMuscles: ['広背筋', '大円筋', '僧帽筋中下部', '上腕三頭筋'],
+        secondaryMuscles: ['三角筋', '棘下筋', '菱形筋', '大胸筋', '前鋸筋', '腕橈骨筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: [
+          '大三で手の皮を巻き込む感覚',
+          '角見で弓を押し始める',
+          '指先は握り込まず添えるだけ'
+        ],
+        tenouchiWarning: '⚠ 右手だけで引っ張らないこと。左手の押しと均等に。',
+        missCheckpoints: ['引き幅（矢束）が足りない', '右手だけで引っ張ってしまう']
+      },
+      { step: "第6節", name: "会", en: "Kai", frame: 50, range: "F50 - F59",
+        desc: "伸合いを継続し、内側から無限に膨らみ続ける最高潮の局面。",
+        analogy: "💬 <strong>イメージ：あふれる寸前の水</strong> — 表面張力で満ちている状態。",
+        advice: "✅ <strong>コツ：止まらず伸び続ける</strong> — 常に中心から外側へ伸び続ける。",
+        memo: "",
+        primaryMuscles: ['広背筋', '僧帽筋中下部', '大胸筋', '上腕三頭筋'],
+        secondaryMuscles: ['腹横筋', '多裂筋', '三角筋', '大円筋', '棘下筋', '前鋸筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: [
+          '五重十文字の完成',
+          '角見を的に向けて押し続ける'
+        ],
+        tenouchiWarning: '⚠ 会で手の形ばかり気にすると体が縮みます。',
+        missCheckpoints: ['ただ止まってしまう', '息を完全に止めて固まる']
+      },
+      { step: "第7節", name: "離れ", en: "Hanare", frame: 60, range: "F60 - F69",
+        desc: "伸合いの極限で弦が自然に解け、矢が放たれる瞬間。",
+        analogy: "💬 <strong>イメージ：熟した果実の落下</strong> — 自然の力で放たれる。",
+        advice: "✅ <strong>コツ：弓手を押し切る</strong> — 放れた瞬間に左手を緩めず押し切る。",
+        memo: "",
+        primaryMuscles: ['大胸筋', '前鋸筋', '広背筋'],
+        secondaryMuscles: ['僧帽筋中下部', '上腕三頭筋', '腕橈骨筋', '三角筋', '腹横筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: [
+          '弓返りは自然に起きる',
+          '手首を意図的に捻らない'
+        ],
+        tenouchiWarning: '⚠ 弓手を緩めると緩み離れになります。',
+        missCheckpoints: ['前離れになる', '左右の拳のスピードがバラバラ']
+      },
+      { step: "第8節", name: "残心", en: "Zanshin", frame: 70, range: "F70 - F80",
+        desc: "放った後の姿勢と精神をそのまま継続し、内省します。",
+        analogy: "💬 <strong>イメージ：水面に広がる波紋</strong> — 静かに心が広がり続ける余韻。",
+        advice: "✅ <strong>コツ：姿勢の自己点検</strong> — 自分の縦横の十文字を振り返る。",
+        memo: "",
+        primaryMuscles: ['脊柱起立筋', '多裂筋', '腹横筋'],
+        secondaryMuscles: ['僧帽筋中下部', '広背筋', '大腿四頭筋', 'ハムストリングス', '大殿筋'],
+        muscleMemos: {},
+        tenouchiCheckpoints: ['手の内の出来栄えを確認する。'],
+        tenouchiWarning: '',
+        missCheckpoints: ['放った瞬間に気が抜ける', '残心を形だけで作ってしまう']
+      }
+    ];
+
+    // NOTEBOOK STORAGE
+    const STORAGE_KEY = 'kyudo_notebooks_v1';
+    const ACTIVE_KEY = 'kyudo_active_nb_v1';
+
+    function emptyNotebook(name = 'ノート1') {
+      return {
+        id: Date.now(),
+        name,
+        data: JSON.parse(JSON.stringify(STAGE_DEFAULTS)),
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function loadNotebooks() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr) && arr.length > 0) return arr;
+        }
+      } catch (e) {}
+      return [emptyNotebook('基本ノート')];
+    }
+
+    function saveNotebooks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allNotebooks));
+      } catch (e) {}
+    }
+
+    function getActiveId() {
+      return parseInt(localStorage.getItem(ACTIVE_KEY), 10) || allNotebooks[0].id;
+    }
+
+    function setActiveId(id) {
+      localStorage.setItem(ACTIVE_KEY, id.toString());
+    }
+
+    let allNotebooks = loadNotebooks();
+    let activeNotebookId = getActiveId();
+    let currentNotebookObj = allNotebooks.find(n => n.id === activeNotebookId) || allNotebooks[0];
+    let userData = currentNotebookObj.data;
+
+    function currentNotebook() {
+      return allNotebooks.find(n => n.id === activeNotebookId) || allNotebooks[0];
+    }
+
+    document.getElementById('currentNotebookName').textContent = currentNotebook().name;
+
+    // THREE.JS SETUP
+    const COLOR_PRIMARY = new THREE.Color(0xE60012);
+    const COLOR_SECONDARY = new THREE.Color(0xF59E0B);
+
+    let currentStage = 0;
+    let loadedModel = null;
+    let mixer, animationAction;
+    const clock = new THREE.Clock();
+    const originalMaterials = new Map();
+
+    const container = document.getElementById('viewer');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 1.0, 4.0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const initRect = container.getBoundingClientRect();
+    renderer.setSize(initRect.width || window.innerWidth, initRect.height || 350, false);
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(5, 8, 5);
+    scene.add(dirLight);
+    const backLight = new THREE.DirectionalLight(0x8fb8f0, 0.6);
+    backLight.position.set(-4, 3, -6);
+    scene.add(backLight);
+
+    const loadingScreen = document.getElementById('loading-screen');
+    const loaderText = document.getElementById('loaderText');
+
+    let defaultCamPos, defaultTargetPos;
+
+    const manager = new THREE.LoadingManager();
+    manager.onProgress = (url, loaded, total) => {
+      const p = Math.round((loaded / total) * 100);
+      loaderText.textContent = `3Dモデル読込中 ${p}%`;
+    };
+    manager.onLoad = () => {
+      setTimeout(() => {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => loadingScreen.style.display = 'none', 400);
+      }, 200);
+    };
+
+    const loader = new GLTFLoader(manager);
+    loader.load('弓道基礎１.glb', (gltf) => {
+      const model = gltf.scene;
+      model.rotation.x = Math.PI / 2;
+      scene.add(model);
+      loadedModel = model;
+
+      model.traverse(obj => {
+        if (!obj.isMesh) return;
+        if (obj.material) {
+          obj.material = obj.material.clone();
+        }
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach(mat => {
+          if (!originalMaterials.has(mat.uuid)) {
+            originalMaterials.set(mat.uuid, {
+              color: mat.color.clone(),
+              transparent: mat.transparent,
+              opacity: mat.opacity,
+            });
+          }
+        });
+      });
+
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      
+      const fov = camera.fov;
+      const aspect = camera.aspect;
+      let dist = (size.y / 2) / Math.tan(Math.PI * fov / 360);
+      const horizontalFov = 2 * Math.atan(Math.tan(Math.PI * fov / 360) * aspect);
+      const distW = (size.x / 2) / Math.tan(horizontalFov / 2);
+      dist = Math.max(dist, distW) * 1.35;
+
+      controls.target.set(center.x, center.y, 0);
+      camera.position.set(center.x, center.y, dist);
+      controls.update();
+
+      defaultCamPos = camera.position.clone();
+      defaultTargetPos = controls.target.clone();
+
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(model);
+        animationAction = mixer.clipAction(gltf.animations[0]);
+        animationAction.setLoop(THREE.LoopOnce, 1);
+        animationAction.clampWhenFinished = true;
+        animationAction.play();
+        document.getElementById('timeline').max = MAX_TIME;
+        selectStage(0);
+      }
+    });
+
+    document.getElementById('fitBtn').addEventListener('click', () => {
+      if (defaultCamPos && defaultTargetPos) {
+        camera.position.copy(defaultCamPos);
+        controls.target.copy(defaultTargetPos);
+        controls.update();
+      }
+    });
+
+    function updateMuscles3D() {
+      if (!loadedModel) return;
+      const data = userData[currentStage];
+      const pri = new Set(data.primaryMuscles || []);
+      const sec = new Set(data.secondaryMuscles || []);
+
+      const NODE_TO_GROUP = new Map();
+      for (const [group, nodes] of Object.entries(MUSCLE_NODES)) {
+        for (const n of nodes) NODE_TO_GROUP.set(n, group);
+      }
+
+      loadedModel.traverse(obj => {
+        if (!obj.isMesh) return;
+        const name = obj.name;
+
+        if (name.startsWith('骨_')) {
+          obj.visible = true;
+          const orig = originalMaterials.get(obj.material.uuid);
+          if (orig) {
+            obj.material.color.copy(orig.color);
+            obj.material.transparent = orig.transparent;
+            obj.material.opacity = orig.opacity;
+            obj.material.depthWrite = true;
+            obj.material.needsUpdate = true;
+          }
+          return;
+        }
+
+        if (!name.startsWith('筋_')) {
+          obj.visible = true;
+          return;
+        }
+
+        const group = NODE_TO_GROUP.get(name);
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+
+        if (group && pri.has(group)) {
+          obj.visible = true;
+          mats.forEach(m => {
+            m.color.set(COLOR_PRIMARY);
+            m.transparent = true;
+            m.opacity = 0.92;
+            m.depthWrite = true;
+            m.needsUpdate = true;
+          });
+        } else if (group && sec.has(group)) {
+          obj.visible = true;
+          mats.forEach(m => {
+            m.color.set(COLOR_SECONDARY);
+            m.transparent = true;
+            m.opacity = 0.85;
+            m.depthWrite = true;
+            m.needsUpdate = true;
+          });
+        } else {
+          obj.visible = false;
+        }
+      });
+    }
+
+    // UI & STAGE TABS
+    const stageTabsContainer = document.getElementById('stageTabs');
+    STAGE_DEFAULTS.forEach((s, idx) => {
+      const tab = document.createElement('div');
+      tab.className = `uq-stage-tab ${idx === 0 ? 'active' : ''}`;
+      tab.innerHTML = `
+        <span class="uq-stage-tab-num">0${idx + 1}</span>
+        <span class="uq-stage-tab-name">${s.name}</span>
+      `;
+      tab.addEventListener('click', () => {
+        collectEditorFields();
+        selectStage(idx);
+        tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      });
+      stageTabsContainer.appendChild(tab);
+    });
+
+    function selectStage(idx) {
+      currentStage = idx;
+      const s = userData[idx];
+      const targetTime = (STAGE_DEFAULTS[idx].frame) / FPS;
+
+      if (animationAction && mixer) {
+        animationAction.paused = false;
+        animationAction.time = targetTime;
+        mixer.update(0);
+        animationAction.paused = true;
+        document.getElementById('timeline').value = targetTime;
+        document.getElementById('timeLabel').textContent = `${targetTime.toFixed(2)}s`;
+      }
+
+      document.getElementById('currentStageChip').textContent = `${s.step || `第${idx+1}節`} ${s.name}`;
+
+      document.querySelectorAll('.uq-stage-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === idx);
+      });
+
+      loadEditorFields();
+      buildMuscleGrid();
+      updateMuscles3D();
+      if (document.getElementById('paneView').style.display !== 'none') {
+        renderPreview();
+      }
+    }
+
+    function buildMuscleGrid() {
+      const pGrid = document.getElementById('primaryMuscleGrid');
+      const sGrid = document.getElementById('secondaryMuscleGrid');
+      pGrid.innerHTML = '';
+      sGrid.innerHTML = '';
+
+      const stageData = userData[currentStage];
+      if (!stageData.primaryMuscles) stageData.primaryMuscles = [];
+      if (!stageData.secondaryMuscles) stageData.secondaryMuscles = [];
+      if (!stageData.muscleMemos) stageData.muscleMemos = {};
+
+      MUSCLES.forEach(m => {
+        const isPri = stageData.primaryMuscles.includes(m);
+        const isSec = stageData.secondaryMuscles.includes(m);
+
+        const pChip = document.createElement('div');
+        pChip.className = `uq-selector-chip ${isPri ? 'primary-sel' : ''}`;
+        pChip.innerHTML = `<span>${isPri ? '✓' : '+'}</span> <span>${m}</span>`;
+        pChip.addEventListener('click', () => {
+          if (isPri) {
+            stageData.primaryMuscles = stageData.primaryMuscles.filter(x => x !== m);
+          } else {
+            stageData.primaryMuscles.push(m);
+            stageData.secondaryMuscles = stageData.secondaryMuscles.filter(x => x !== m);
+          }
+          buildMuscleGrid();
+          updateMuscles3D();
+        });
+        pGrid.appendChild(pChip);
+
+        const sChip = document.createElement('div');
+        sChip.className = `uq-selector-chip ${isSec ? 'secondary-sel' : ''}`;
+        sChip.innerHTML = `<span>${isSec ? '✓' : '+'}</span> <span>${m}</span>`;
+        sChip.addEventListener('click', () => {
+          if (isSec) {
+            stageData.secondaryMuscles = stageData.secondaryMuscles.filter(x => x !== m);
+          } else {
+            stageData.secondaryMuscles.push(m);
+            stageData.primaryMuscles = stageData.primaryMuscles.filter(x => x !== m);
+          }
+          buildMuscleGrid();
+          updateMuscles3D();
+        });
+        sGrid.appendChild(sChip);
+      });
+
+      renderMuscleMemos();
+    }
+
+    function renderMuscleMemos() {
+      const area = document.getElementById('muscleMemoArea');
+      area.innerHTML = '';
+      const stageData = userData[currentStage];
+      const selected = [...(stageData.primaryMuscles || []), ...(stageData.secondaryMuscles || [])];
+
+      if (selected.length === 0) {
+        area.innerHTML = '<div style="font-size:11.5px; color:var(--text-muted);">筋肉が選択されていません。上から選択してください。</div>';
+        return;
+      }
+
+      selected.forEach(m => {
+        const isPri = (stageData.primaryMuscles || []).includes(m);
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:8px;';
+        row.innerHTML = `
+          <span style="font-size:11.5px; font-weight:800; min-width:90px; color:${isPri ? 'var(--uq-red)' : 'var(--color-secondary-bright)'};">
+            ${isPri ? '🔴' : '🟡'} ${m}
+          </span>
+          <input type="text" class="uq-input-text" placeholder="${m}の意識ポイント・メモ" value="${stageData.muscleMemos[m] || ''}" oninput="updateMuscleMemo('${m}', this.value)" style="flex:1;">
+        `;
+        area.appendChild(row);
+      });
+    }
+
+    window.updateMuscleMemo = function(muscle, val) {
+      if (!userData[currentStage].muscleMemos) userData[currentStage].muscleMemos = {};
+      userData[currentStage].muscleMemos[muscle] = val;
+    };
+
+    function renderCheckpoints(type) {
+      const stageData = userData[currentStage];
+      const listEl = document.getElementById(type === 'tenouchi' ? 'tenouchiList' : 'missList');
+      listEl.innerHTML = '';
+
+      const arr = type === 'tenouchi' ? (stageData.tenouchiCheckpoints || []) : (stageData.missCheckpoints || []);
+      arr.forEach((text, i) => {
+        const row = document.createElement('div');
+        row.className = 'uq-checkpoint-row';
+        row.innerHTML = `
+          <input type="text" class="uq-input-text" value="${text.replace(/"/g, '&quot;')}" oninput="updateCheckpoint('${type}', ${i}, this.value)" style="flex:1;">
+          <button type="button" class="uq-checkpoint-del" onclick="removeCheckpoint('${type}', ${i})" title="削除">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    window.updateCheckpoint = function(type, idx, val) {
+      const stageData = userData[currentStage];
+      if (type === 'tenouchi') {
+        stageData.tenouchiCheckpoints[idx] = val;
+      } else {
+        stageData.missCheckpoints[idx] = val;
+      }
+    };
+
+    window.addCheckpoint = function(type) {
+      const stageData = userData[currentStage];
+      if (type === 'tenouchi') {
+        if (!stageData.tenouchiCheckpoints) stageData.tenouchiCheckpoints = [];
+        stageData.tenouchiCheckpoints.push('新しいチェックポイント');
+      } else {
+        if (!stageData.missCheckpoints) stageData.missCheckpoints = [];
+        stageData.missCheckpoints.push('新しい注意点・ミス');
+      }
+      renderCheckpoints(type);
+    };
+
+    window.removeCheckpoint = function(type, idx) {
+      const stageData = userData[currentStage];
+      if (type === 'tenouchi') {
+        stageData.tenouchiCheckpoints.splice(idx, 1);
+      } else {
+        stageData.missCheckpoints.splice(idx, 1);
+      }
+      renderCheckpoints(type);
+    };
+
+    function loadEditorFields() {
+      const s = userData[currentStage];
+      document.getElementById('f-desc').innerHTML = s.desc || '';
+      document.getElementById('f-analogy').innerHTML = s.analogy || '';
+      document.getElementById('f-advice').innerHTML = s.advice || '';
+      document.getElementById('f-memo').innerHTML = s.memo || '';
+      document.getElementById('f-tenouchiWarning').innerHTML = s.tenouchiWarning || '';
+
+      renderCheckpoints('tenouchi');
+      renderCheckpoints('miss');
+    }
+
+    function collectEditorFields() {
+      const s = userData[currentStage];
+      s.desc = document.getElementById('f-desc').innerHTML;
+      s.analogy = document.getElementById('f-analogy').innerHTML;
+      s.advice = document.getElementById('f-advice').innerHTML;
+      s.memo = document.getElementById('f-memo').innerHTML;
+      s.tenouchiWarning = document.getElementById('f-tenouchiWarning').innerHTML;
+    }
+
+    window.switchModeTab = function(mode) {
+      collectEditorFields();
+      if (mode === 'edit') {
+        document.getElementById('paneEdit').style.display = 'flex';
+        document.getElementById('paneView').style.display = 'none';
+        document.getElementById('tabBtnEdit').classList.add('active');
+        document.getElementById('tabBtnView').classList.remove('active');
+      } else {
+        document.getElementById('paneEdit').style.display = 'none';
+        document.getElementById('paneView').style.display = 'flex';
+        document.getElementById('tabBtnView').classList.add('active');
+        document.getElementById('tabBtnEdit').classList.remove('active');
+        renderPreview();
+      }
+    };
+
+    function renderPreview() {
+      const s = userData[currentStage];
+      document.getElementById('previewDesc').innerHTML = `
+        <div class="uq-card-title">📖 ${s.step || `第${currentStage+1}節`} ${s.name}</div>
+        <p style="font-size:13.5px; line-height:1.7;">${s.desc || '（説明なし）'}</p>
+        ${s.analogy ? `<div class="uq-callout-box" style="margin:8px 0;">${s.analogy}</div>` : ''}
+        ${s.advice ? `<div class="uq-callout-box tip" style="margin:8px 0;">${s.advice}</div>` : ''}
+        ${s.memo ? `<div style="background:var(--panel); padding:10px; border-radius:4px; font-size:12.5px; margin-top:8px;"><strong>📝 自由メモ:</strong><br>${s.memo}</div>` : ''}
+      `;
+
+      const priList = (s.primaryMuscles || []).map(m => `
+        <div style="background:var(--uq-red-light); padding:8px 12px; border-radius:4px; border-left:3px solid var(--uq-red);">
+          <strong style="color:var(--uq-red); font-size:12.5px;">🔴 ${m}</strong>
+          ${s.muscleMemos && s.muscleMemos[m] ? `<div style="font-size:11.5px; margin-top:2px;">${s.muscleMemos[m]}</div>` : ''}
+        </div>
+      `).join('');
+
+      const secList = (s.secondaryMuscles || []).map(m => `
+        <div style="background:rgba(245,158,11,0.08); padding:8px 12px; border-radius:4px; border-left:3px solid var(--color-secondary-bright);">
+          <strong style="color:var(--color-secondary-bright); font-size:12.5px;">🟡 ${m}</strong>
+          ${s.muscleMemos && s.muscleMemos[m] ? `<div style="font-size:11.5px; margin-top:2px;">${s.muscleMemos[m]}</div>` : ''}
+        </div>
+      `).join('');
+
+      document.getElementById('previewMuscles').innerHTML = `
+        <div class="uq-card-title">💪 意識する筋肉</div>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
+          ${priList || '<span style="font-size:12px; color:var(--text-muted);">主動筋の選択なし</span>'}
+          ${secList}
+        </div>
+      `;
+
+      const tc = (s.tenouchiCheckpoints || []).map(t => `<div style="font-size:12.5px; padding:4px 0;">✓ ${t}</div>`).join('');
+      document.getElementById('previewTenouchi').innerHTML = `
+        <div class="uq-card-title">🤚 手の内</div>
+        ${tc || '<span style="font-size:12px; color:var(--text-muted);">チェックポイントなし</span>'}
+        ${s.tenouchiWarning ? `<div style="background:var(--uq-red-light); padding:8px 10px; border-radius:4px; color:var(--uq-red); font-size:12px; margin-top:8px;">${s.tenouchiWarning}</div>` : ''}
+      `;
+
+      const mc = (s.missCheckpoints || []).map(t => `<div style="font-size:12.5px; padding:4px 0;">⚠ ${t}</div>`).join('');
+      document.getElementById('previewMiss').innerHTML = `
+        <div class="uq-card-title">⚠ やりがちなミス</div>
+        ${mc || '<span style="font-size:12px; color:var(--text-muted);">ミス項目なし</span>'}
+      `;
+    }
+
+    // Playback Controls
+    document.getElementById('playBtn').addEventListener('click', () => {
+      if (animationAction) {
+        animationAction.timeScale = 0.25;
+        animationAction.paused = false;
+      }
+      document.getElementById('playBtn').classList.add('active-red');
+      document.getElementById('pauseBtn').classList.remove('active-red');
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      if (animationAction) animationAction.paused = true;
+      document.getElementById('pauseBtn').classList.add('active-red');
+      document.getElementById('playBtn').classList.remove('active-red');
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (animationAction) {
+        animationAction.stop();
+        animationAction.setLoop(THREE.LoopOnce, 1);
+        animationAction.clampWhenFinished = true;
+        animationAction.timeScale = 0.25;
+        animationAction.play();
+        animationAction.paused = false;
+        document.getElementById('timeline').value = 0;
+        document.getElementById('timeLabel').textContent = '0.00s';
+        document.getElementById('playBtn').classList.add('active-red');
+        document.getElementById('pauseBtn').classList.remove('active-red');
+      }
+    });
+
+    document.getElementById('timeline').addEventListener('input', (e) => {
+      if (animationAction && mixer) {
+        animationAction.paused = false;
+        animationAction.time = parseFloat(e.target.value);
+        mixer.update(0);
+        animationAction.paused = true;
+        document.getElementById('timeLabel').textContent = `${animationAction.time.toFixed(2)}s`;
+      }
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if (mixer && !animationAction.paused) {
+        mixer.update(delta);
+        if (animationAction.time >= MAX_TIME) {
+          animationAction.paused = false;
+          animationAction.time = MAX_TIME;
+          mixer.update(0);
+          animationAction.paused = true;
+          document.getElementById('playBtn').classList.remove('active-red');
+          document.getElementById('pauseBtn').classList.add('active-red');
+        }
+        const t = Math.min(animationAction.time, MAX_TIME);
+        document.getElementById('timeline').value = t;
+        document.getElementById('timeLabel').textContent = `${t.toFixed(2)}s`;
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    function handleResize() {
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleResize, 150);
+      setTimeout(handleResize, 500);
+    });
+
+    setTimeout(handleResize, 100);
+    animate();
+
+    // FORMAT DOC & RICH TEXT HELPERS (入力前スタイル指定対応)
+    let activeEditor = null;
+
+    document.addEventListener('selectionchange', () => {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const node = sel.anchorNode;
+        const editor = node ? (node.nodeType === 1 ? node.closest('.uq-rich-editor') : node.parentElement ? node.parentElement.closest('.uq-rich-editor') : null) : null;
+        if (editor) activeEditor = editor;
+      }
+    });
+
+    document.querySelectorAll('.uq-rich-editor').forEach(ed => {
+      ed.addEventListener('focus', () => { activeEditor = ed; });
+      ed.addEventListener('click', () => { activeEditor = ed; });
+    });
+
+    window.applyFormat = function(type, val, event) {
+      if (event) event.preventDefault();
+      
+      const editor = activeEditor || document.getElementById('f-desc');
+      if (!editor) return;
+      editor.focus();
+
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) {
+        const r = document.createRange();
+        r.selectNodeContents(editor);
+        r.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(r);
+      }
+      const range = sel.getRangeAt(0);
+
+      if (!sel.isCollapsed) {
+        // 選択中のテキストがある場合
+        if (type === 'bold') {
+          document.execCommand('bold', false, null);
+        } else if (type === 'wavy') {
+          wrapSelection(range, 'u', 'text-decoration: underline wavy var(--uq-red) !important; text-underline-offset: 3.5px !important;');
+        } else if (type === 'color') {
+          wrapSelection(range, 'span', `color: ${val}; font-weight: 800;`);
+        } else if (type === 'marker') {
+          wrapSelection(range, 'mark', 'background: #FFF3CD; color: #111111; padding: 0 3px; border-radius: 2px; font-weight: 700;');
+        } else if (type === 'reset') {
+          document.execCommand('removeFormat', false, null);
+        }
+      } else {
+        // 選択がない（入力前）場合：スタイル付きタグとゼロ幅スペースを挿入してカーソルを内側に配置
+        if (type === 'bold') {
+          document.execCommand('bold', false, null);
+        } else if (type === 'wavy') {
+          insertStyledPlaceholder(range, 'u', 'text-decoration: underline wavy var(--uq-red) !important; text-underline-offset: 3.5px !important;');
+        } else if (type === 'color') {
+          insertStyledPlaceholder(range, 'span', `color: ${val}; font-weight: 800;`);
+        } else if (type === 'marker') {
+          insertStyledPlaceholder(range, 'mark', 'background: #FFF3CD; color: #111111; padding: 0 3px; border-radius: 2px; font-weight: 700;');
+        } else if (type === 'reset') {
+          document.execCommand('removeFormat', false, null);
+        }
+      }
+    };
+
+    function wrapSelection(range, tag, style) {
+      const el = document.createElement(tag);
+      if (style) el.style.cssText = style;
+      try {
+        el.appendChild(range.extractContents());
+        range.insertNode(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        const newR = document.createRange();
+        newR.selectNodeContents(el);
+        sel.addRange(newR);
+      } catch (e) {
+        document.execCommand(tag === 'u' ? 'underline' : 'bold');
+      }
+    }
+
+    function insertStyledPlaceholder(range, tag, style) {
+      const el = document.createElement(tag);
+      if (style) el.style.cssText = style;
+      const zws = document.createTextNode('\u200B');
+      el.appendChild(zws);
+      range.insertNode(el);
+      range.setStart(zws, 1);
+      range.setEnd(zws, 1);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    // SAVE & TOAST
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function saveUserData() {
+      currentNotebook().data = userData;
+      saveNotebooks();
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+      document.getElementById('lastSavedLabel').textContent = `保存済 ${timeStr}`;
+    }
+
+    window.saveCurrentStage = function() {
+      collectEditorFields();
+      saveUserData();
+      showToast(`💾 第${currentStage + 1}節を保存しました`);
+    };
+
+    window.saveAll = function() {
+      collectEditorFields();
+      saveUserData();
+      showToast('💾 すべてのデータを保存しました');
+    };
+
+    window.resetCurrentStage = function() {
+      if (!confirm('この節を初期状態にリセットしますか？')) return;
+      userData[currentStage] = JSON.parse(JSON.stringify(STAGE_DEFAULTS[currentStage]));
+      loadEditorFields();
+      buildMuscleGrid();
+      updateMuscles3D();
+      showToast('↩ リセットしました');
+    };
+
+    window.openShare = function() {
+      collectEditorFields();
+      saveUserData();
+      try {
+        const json = JSON.stringify(userData);
+        const compressed = LZString.compressToEncodedURIComponent(json);
+        const url = `${location.origin}${location.pathname.replace('カスタム.html', 'プレビュー.html')}#custom=${compressed}`;
+
+        document.getElementById('shareUrlInput').value = url;
+
+        const qrWrap = document.getElementById('shareQrWrap');
+        qrWrap.innerHTML = '';
+        if (typeof qrcode === 'function') {
+          try {
+            // typeNumber 0 = 自動判定。データが長い場合は自動で大きいバージョンが選ばれる
+            const qr = qrcode(0, 'M');
+            qr.addData(url);
+            qr.make();
+            qrWrap.innerHTML = qr.createSvgTag(4, 0);
+          } catch (qrErr) {
+            // データが長すぎてQRコード化できない場合はURLのみ表示
+            qrWrap.innerHTML = '<div style="font-size:11.5px; color:var(--text-sub); padding:20px; text-align:center;">内容が多いため、QRコードは生成できませんでした。<br>下のURLをコピーしてご利用ください。</div>';
+          }
+        }
+
+        document.getElementById('shareModal').classList.add('show');
+      } catch (e) {
+        alert('共有URLの生成に失敗しました。');
+      }
+    };
+
+    window.closeShareModal = function() {
+      document.getElementById('shareModal').classList.remove('show');
+    };
+
+    window.copyShareUrl = function() {
+      const input = document.getElementById('shareUrlInput');
+      const url = input.value;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('🔗 共有用URLをコピーしました！');
+      }).catch(() => {
+        input.select();
+        document.execCommand('copy');
+        showToast('🔗 共有用URLをコピーしました！');
+      });
+    };
+
+    window.importData = function() {
+      const str = prompt('共有されたデータ文字列またはURLを貼り付けてください：');
+      if (!str) return;
+      try {
+        let compressed = str.trim();
+        if (compressed.includes('#custom=')) {
+          compressed = compressed.split('#custom=')[1];
+        }
+        const json = LZString.decompressFromEncodedURIComponent(compressed);
+        if (json) {
+          const parsed = JSON.parse(json);
+          if (Array.isArray(parsed) && parsed.length >= 8) {
+            userData = parsed;
+            currentStage = 0;
+            saveUserData();
+            loadEditorFields();
+            buildMuscleGrid();
+            updateMuscles3D();
+            showToast('📥 データをインポートしました');
+            return;
+          }
+        }
+        throw new Error();
+      } catch (e) {
+        alert('データの解析に失敗しました。形式を確認してください。');
+      }
+    };
+
+    // NOTEBOOK MODAL
+    window.openNotebookModal = function() {
+      renderNotebookList();
+      document.getElementById('notebookModal').classList.add('show');
+    };
+
+    window.closeNotebookModal = function() {
+      document.getElementById('notebookModal').classList.remove('show');
+    };
+
+    function renderNotebookList() {
+      const list = document.getElementById('notebookList');
+      list.innerHTML = '';
+      allNotebooks.forEach(nb => {
+        const isActive = nb.id === activeNotebookId;
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:4px; border:1px solid var(--line); background:${isActive ? 'var(--uq-red-light)' : 'var(--bg)'};`;
+        div.innerHTML = `
+          <div>
+            <strong style="font-size:13px; color:${isActive ? 'var(--uq-red)' : 'var(--text)'};">${nb.name}</strong>
+          </div>
+          <div style="display:flex; gap:4px;">
+            ${!isActive ? `<button class="uq-btn" onclick="switchNotebook(${nb.id})">開く</button>` : '<span style="font-size:11px; font-weight:800; color:var(--uq-red); padding:4px 8px;">編集中</span>'}
+            ${allNotebooks.length > 1 ? `<button class="uq-btn" onclick="deleteNotebook(${nb.id})">削除</button>` : ''}
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    window.createNotebook = function() {
+      const input = document.getElementById('newNotebookName');
+      const name = input.value.trim() || `ノート${allNotebooks.length + 1}`;
+      collectEditorFields();
+      saveUserData();
+      const nb = emptyNotebook(name);
+      allNotebooks.push(nb);
+      activeNotebookId = nb.id;
+      setActiveId(activeNotebookId);
+      userData = nb.data;
+      saveNotebooks();
+      currentStage = 0;
+      loadEditorFields();
+      buildMuscleGrid();
+      updateMuscles3D();
+      document.getElementById('currentNotebookName').textContent = name;
+      input.value = '';
+      closeNotebookModal();
+      showToast(`📓 「${name}」を作成しました`);
+    };
+
+    window.switchNotebook = function(id) {
+      collectEditorFields();
+      saveUserData();
+      activeNotebookId = id;
+      setActiveId(id);
+      userData = currentNotebook().data;
+      currentStage = 0;
+      loadEditorFields();
+      buildMuscleGrid();
+      updateMuscles3D();
+      document.getElementById('currentNotebookName').textContent = currentNotebook().name;
+      closeNotebookModal();
+      showToast(`📓 「${currentNotebook().name}」に切り替えました`);
+    };
+
+    window.deleteNotebook = function(id) {
+      if (allNotebooks.length <= 1) return;
+      if (!confirm('このノートを削除しますか？')) return;
+      allNotebooks = allNotebooks.filter(n => n.id !== id);
+      if (activeNotebookId === id) {
+        activeNotebookId = allNotebooks[0].id;
+        setActiveId(activeNotebookId);
+        userData = currentNotebook().data;
+        currentStage = 0;
+        loadEditorFields();
+        buildMuscleGrid();
+        updateMuscles3D();
+        document.getElementById('currentNotebookName').textContent = currentNotebook().name;
+      }
+      saveNotebooks();
+      renderNotebookList();
+    };
+
+    loadEditorFields();
+    buildMuscleGrid();
+  </script>
+
+  <!-- Global UI Helpers -->
+  <script>
+    function toggleDrawer() {
+      const drawer = document.getElementById('sideDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+      }
+    }
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function updateTheme(isDark) {
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+        localStorage.setItem('kyudo_dark_mode', '1');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeIcon.textContent = 'dark_mode';
+        localStorage.setItem('kyudo_dark_mode', '0');
+      }
+    }
+
+    if (localStorage.getItem('kyudo_dark_mode') === '1') {
+      updateTheme(true);
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      updateTheme(!isDark);
+    });
+  </script>
+</body>
+</html>
