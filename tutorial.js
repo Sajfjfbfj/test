@@ -701,6 +701,14 @@
         if (el.parentNode) el.parentNode.removeChild(el);
       }, 220);
     }
+    // sync.js が「表示中はページのリロードを保留する」ために参照するフラグ。
+    // ここで false に戻し、待機中のリロードがあれば進めてよいことを伝える。
+    window.kyudoTutorialActive = false;
+    try {
+      window.dispatchEvent(new CustomEvent('kyudoTutorialClosed'));
+    } catch (e) {
+      // 古い環境でCustomEventが使えない場合は無視（sync.js側のタイムアウトで救済される）
+    }
   }
 
   function buildDots(total, index) {
@@ -839,6 +847,9 @@
     if (activeSteps.length === 0) { markSeen(); return; }
     currentIndex = 0;
     drawerOpenedByUs = false;
+    // sync.js が同期後のページリロードを保留するために参照するフラグ。
+    // close() が呼ばれるまで true のままにしておく。
+    window.kyudoTutorialActive = true;
     renderStep();
   }
 
