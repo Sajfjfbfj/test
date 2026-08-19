@@ -22,15 +22,29 @@
      （容量が大きいため、今回は同期しません）。
 
    【今回の修正点】
-   ・アクセストークンをページ内変数だけでなく sessionStorage にも
-     保存するようにしました。
-     これまでは別ページに移動するたびにトークンがメモリ上から
-     消えてしまい、毎回Googleへサイレント再認証をリクエストして
-     いたため、本番環境（サードパーティCookie制限やFedCMの影響）
-     ではその都度アカウント選択画面が出てしまっていました。
-     sessionStorageに保存することで、有効期限内（通常1時間）は
-     ページを移動してもGoogleに問い合わせ直さずに済むようになり、
-     ログイン選択画面が毎回出る問題が解消されます。
+   ・アクセストークンの保存先を sessionStorage → localStorage に
+     変更しました。sessionStorageはブラウザ／アプリを閉じると
+     消えてしまうため、次に開いたときに毎回サイレント再認証が
+     必要になり、環境によってはアカウント選択画面が出てしまって
+     いました。localStorageに保存することで、トークンの有効期限
+     （通常1時間）が切れるまでは、アプリを再起動してもGoogleに
+     問い合わせ直さずに済み、「開くたびにログイン画面が出る」問題
+     が大きく軽減されます。
+     ※ Googleの実装上、期限切れ後の自動再認証（サイレント更新）が
+       ブラウザのサードパーティCookie制限などで失敗した場合のみ、
+       改めてログインボタンを押していただく必要があります。
+   ・ログイン中のユーザーのプロフィール画像（アイコン）も取得し、
+     kyudoSyncStatus().photoUrl として各ページから使えるように
+     しました。ログイン後はヘッダーや連携パネルに、汎用アイコンの
+     代わりにそのGoogleアカウントのアイコン画像を表示できます。
+   ・Googleドライブとの同期で新しいデータが見つかった場合、
+     ページを自動リロードして反映する処理がありますが、これが
+     「初回チュートリアル」の表示中に割り込んでしまうと、
+     チュートリアルが最後まで完了できず「既読」が保存されないため、
+     次に開いたときも毎回チュートリアルが最初から出てしまう不具合が
+     ありました。tutorial.js が表示中は window.kyudoTutorialActive
+     が true になるようにし、同期側はそれを見てチュートリアルが
+     終わるまでリロードを保留するようにしました。
    ============================================================ */
 (function () {
   'use strict';
@@ -45,10 +59,11 @@
   var SIGNED_IN_KEY = 'kyudo_sync_signed_in';
   var RELOAD_GUARD_PREFIX = 'kyudo_sync_reload_guard:';
 
-  // ---- トークンキャッシュ用（ページ遷移をまたいで保持するため sessionStorage を使用） ----
+  // ---- トークンキャッシュ用（アプリ再起動をまたいで保持するため localStorage を使用） ----
   var TOKEN_KEY = 'kyudo_sync_access_token';
   var TOKEN_EXPIRES_KEY = 'kyudo_sync_token_expires_at';
   var EMAIL_KEY = 'kyudo_sync_email';
+  var PICTURE_KEY = 'kyudo_sync_picture';
 
   // 同期対象のlocalStorageキー一覧（動画本体は対象外・メタ情報のみ）
   var SYNC_KEYS = [
@@ -64,32 +79,36 @@
     'kyudo_anim'                 // アニメーション設定
   ];
 
-  // ---- ページ読み込み時に sessionStorage からトークンを復元 ----
+  // ---- ページ読み込み時に localStorage からトークンを復元 ----
   var accessToken = null;
   var tokenExpiresAt = 0;
   var currentUserEmail = null;
-  (function restoreTokenFromSession() {
+  var currentUserPicture = null;
+  (function restoreTokenFromStorage() {
     try {
-      var savedToken = sessionStorage.getItem(TOKEN_KEY);
-      var savedExpires = Number(sessionStorage.getItem(TOKEN_EXPIRES_KEY) || 0);
+      var savedToken = localStorage.getItem(TOKEN_KEY);
+      var savedExpires = Number(localStorage.getItem(TOKEN_EXPIRES_KEY) || 0);
       if (savedToken && savedExpires && Date.now() < savedExpires - 60000) {
         accessToken = savedToken;
         tokenExpiresAt = savedExpires;
-        currentUserEmail = sessionStorage.getItem(EMAIL_KEY) || null;
+        currentUserEmail = localStorage.getItem(EMAIL_KEY) || null;
+        currentUserPicture = localStorage.getItem(PICTURE_KEY) || null;
       }
-    } catch (e) { /* sessionStorageが使えない環境（プライベートモード等）は無視 */ }
+    } catch (e) { /* localStorageが使えない環境（プライベートモード等）は無視 */ }
   })();
 
   function persistToken() {
     try {
       if (accessToken) {
-        sessionStorage.setItem(TOKEN_KEY, accessToken);
-        sessionStorage.setItem(TOKEN_EXPIRES_KEY, String(tokenExpiresAt));
-        if (currentUserEmail) sessionStorage.setItem(EMAIL_KEY, currentUserEmail);
+        localStorage.setItem(TOKEN_KEY, accessToken);
+        localStorage.setItem(TOKEN_EXPIRES_KEY, String(tokenExpiresAt));
+        if (currentUserEmail) localStorage.setItem(EMAIL_KEY, currentUserEmail);
+        if (currentUserPicture) localStorage.setItem(PICTURE_KEY, currentUserPicture);
       } else {
-        sessionStorage.removeItem(TOKEN_KEY);
-        sessionStorage.removeItem(TOKEN_EXPIRES_KEY);
-        sessionStorage.removeItem(EMAIL_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_EXPIRES_KEY);
+        localStorage.removeItem(EMAIL_KEY);
+        localStorage.removeItem(PICTURE_KEY);
       }
     } catch (e) { /* noop */ }
   }
@@ -115,6 +134,7 @@
     return {
       signedIn: !!accessToken,
       email: currentUserEmail,
+      photoUrl: currentUserPicture,
       lastSyncedAt: localStorage.getItem(LAST_SYNC_KEY) || null,
       configured: !!GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.indexOf('YOUR_CLIENT_ID') === -1
     };
@@ -157,7 +177,7 @@
             accessToken = resp.access_token;
             tokenExpiresAt = Date.now() + (Number(resp.expires_in || 3600) * 1000);
             persistToken();
-            fetchUserEmail().then(function () { persistToken(); notify(); resolve(resp); });
+            fetchUserProfile().then(function () { persistToken(); notify(); resolve(resp); });
           } else {
             reject(resp);
           }
@@ -168,19 +188,22 @@
     });
   }
 
-  function fetchUserEmail() {
+  function fetchUserProfile() {
     if (!accessToken) return Promise.resolve();
-    if (currentUserEmail) return Promise.resolve(); // 既に持っていれば再取得不要
+    if (currentUserEmail && currentUserPicture) return Promise.resolve(); // 既に持っていれば再取得不要
     return fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: 'Bearer ' + accessToken }
     }).then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (info) { if (info && info.email) currentUserEmail = info.email; })
+      .then(function (info) {
+        if (info && info.email) currentUserEmail = info.email;
+        if (info && info.picture) currentUserPicture = info.picture;
+      })
       .catch(function () {});
   }
 
   function ensureFreshToken() {
-    // sessionStorageから復元済み、またはメモリ上にまだ有効なトークンがあればそのまま使う
-    // （＝ページ遷移してもGoogleへ問い合わせ直さない）
+    // localStorageから復元済み、またはメモリ上にまだ有効なトークンがあればそのまま使う
+    // （＝ページ遷移やアプリ再起動をまたいでもGoogleへ問い合わせ直さない）
     if (accessToken && Date.now() < tokenExpiresAt - 60000) {
       return Promise.resolve(accessToken);
     }
@@ -205,6 +228,7 @@
     var done = function () {
       accessToken = null;
       currentUserEmail = null;
+      currentUserPicture = null;
       tokenExpiresAt = 0;
       persistToken();
       localStorage.removeItem(SIGNED_IN_KEY);
@@ -312,6 +336,36 @@
     }
   };
 
+  // ---- 同期で新しいデータが見つかった時のリロード ----
+  // tutorial.js が案内表示中（window.kyudoTutorialActive === true）は
+  // ここでリロードしてしまうと、チュートリアルが最後まで完了できず
+  // 「既読」フラグが保存されないため、次に開いた時も毎回チュートリアルが
+  // 最初から出てしまう。そのためチュートリアルが終わるまでリロードを
+  // 保留し、tutorial.js が発火する 'kyudoTutorialClosed' イベントを
+  // 待ってから実行する（念のためのタイムアウトも設けてある）。
+  function reloadForSync() {
+    var guardKey = RELOAD_GUARD_PREFIX + location.pathname;
+    if (sessionStorage.getItem(guardKey)) return;
+
+    var doReload = function () {
+      if (sessionStorage.getItem(guardKey)) return;
+      sessionStorage.setItem(guardKey, '1');
+      location.reload();
+    };
+
+    if (window.kyudoTutorialActive) {
+      var fallback = setTimeout(doReload, 120000); // 念のための保険（最大2分待つ）
+      window.addEventListener('kyudoTutorialClosed', function onClosed() {
+        window.removeEventListener('kyudoTutorialClosed', onClosed);
+        clearTimeout(fallback);
+        doReload();
+      }, { once: true });
+      return;
+    }
+
+    doReload();
+  }
+
   // ---- ページ読み込み時：以前サインイン済みならサイレントで再認証→最新を取得 ----
   function initialPull() {
     if (localStorage.getItem(SIGNED_IN_KEY) !== '1') return;
@@ -319,13 +373,7 @@
     ensureFreshToken().then(function (token) {
       if (!token) return;
       return window.kyudoSyncPull().then(function (changed) {
-        if (changed) {
-          var guardKey = RELOAD_GUARD_PREFIX + location.pathname;
-          if (!sessionStorage.getItem(guardKey)) {
-            sessionStorage.setItem(guardKey, '1');
-            location.reload();
-          }
-        }
+        if (changed) reloadForSync();
       });
     }).catch(function () {});
   }
